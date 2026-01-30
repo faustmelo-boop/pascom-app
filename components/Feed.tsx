@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Post, User, UserRole } from '../types';
 import { supabase } from '../supabaseClient';
-import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HandHelping, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List } from 'lucide-react';
+import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HelpingHand, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List } from 'lucide-react';
 
 interface FeedProps {
   posts: Post[];
@@ -384,7 +384,7 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
     { id: 'aviso', label: 'Aviso', icon: Megaphone, color: 'text-red-500', hoverBg: 'hover:bg-red-50' },
     { id: 'cobertura', label: 'Foto/Vídeo', icon: ImageIcon, color: 'text-green-500', hoverBg: 'hover:bg-green-50' },
     { id: 'enquete', label: 'Enquete', icon: BarChart2, color: 'text-orange-500', hoverBg: 'hover:bg-orange-50' },
-    { id: 'pedido', label: 'Pedido', icon: HandHelping, color: 'text-yellow-500', hoverBg: 'hover:bg-yellow-50' },
+    { id: 'pedido', label: 'Pedido', icon: HelpingHand, color: 'text-yellow-500', hoverBg: 'hover:bg-yellow-50' },
     { id: 'formacao', label: 'Formação', icon: BookOpen, color: 'text-blue-500', hoverBg: 'hover:bg-blue-50' },
   ];
 
