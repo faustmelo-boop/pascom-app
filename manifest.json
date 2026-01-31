@@ -1,7 +1,8 @@
 {
   "name": "Pascom Tasks",
   "short_name": "Pascom",
-  "start_url": ".",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#f3f4f6",
   "theme_color": "#2563eb",

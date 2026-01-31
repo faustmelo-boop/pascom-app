@@ -142,7 +142,7 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
             .eq('user_id', currentUser.id);
 
         if (!progressError && progressData) {
-            const completedSet = new Set(progressData.map((p: any) => p.lesson_id));
+            const completedSet = new Set<string>(progressData.map((p: any) => p.lesson_id));
             setCompletedLessonIds(completedSet);
             
             // Recalculate course progress locally for accurate display
