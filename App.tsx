@@ -66,83 +66,6 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- Realtime Notifications Subscription ---
-  useEffect(() => {
-    if (!session?.user?.id) return;
-
-    // Use Web Audio API for a simple beep (No external fetch required)
-    const playNotificationSound = () => {
-        try {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            if (!AudioContext) return;
-            
-            const ctx = new AudioContext();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
-            gain.gain.setValueAtTime(0.05, ctx.currentTime);
-            
-            osc.start();
-            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
-            osc.stop(ctx.currentTime + 0.3);
-        } catch (e) { 
-            console.error("Audio playback failed", e); 
-        }
-    };
-
-    const channel = supabase
-      .channel('public:notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*', // Listen to INSERT and UPDATE
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${session.user.id}`,
-        },
-        (payload) => {
-          if (payload.eventType === 'INSERT') {
-             // New Notification received
-             const newNotif: AppNotification = {
-                id: payload.new.id,
-                userId: payload.new.user_id,
-                type: payload.new.type,
-                title: payload.new.title,
-                content: payload.new.content,
-                isRead: payload.new.is_read,
-                createdAt: payload.new.created_at,
-                relatedId: payload.new.related_id
-             };
-             
-             setNotifications(prev => [newNotif, ...prev]);
-             playNotificationSound();
-             
-          } else if (payload.eventType === 'UPDATE') {
-             // Notification updated (e.g., marked as read)
-             setNotifications(prev => prev.map(n => 
-                n.id === payload.new.id 
-                ? { ...n, isRead: payload.new.is_read } 
-                : n
-             ));
-          }
-        }
-      )
-      .subscribe((status) => {
-          if (status === 'SUBSCRIBED') {
-              // console.log('Notification channel subscribed');
-          }
-      });
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [session?.user?.id]);
-
   // Define fetch data function to be reusable
   const refreshData = useCallback(async () => {
     if (!session) return;
@@ -338,10 +261,90 @@ function App() {
     }
   }, [session]);
 
+  // --- Realtime Subscriptions ---
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    // 1. Notification Sound Logic
+    const playNotificationSound = () => {
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+            gain.gain.setValueAtTime(0.05, ctx.currentTime);
+            
+            osc.start();
+            gain.gain.exponentialRampToValueAtTime(0.00001, ctx.currentTime + 0.3);
+            osc.stop(ctx.currentTime + 0.3);
+        } catch (e) { 
+            console.error("Audio playback failed", e); 
+        }
+    };
+
+    // 2. Channel Definition
+    const channel = supabase.channel('app-realtime-sync')
+      
+      // Listen for Notifications (Filtered by user)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT and UPDATE
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${session.user.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'INSERT') {
+             const newNotif: AppNotification = {
+                id: payload.new.id,
+                userId: payload.new.user_id,
+                type: payload.new.type,
+                title: payload.new.title,
+                content: payload.new.content,
+                isRead: payload.new.is_read,
+                createdAt: payload.new.created_at,
+                relatedId: payload.new.related_id
+             };
+             setNotifications(prev => [newNotif, ...prev]);
+             playNotificationSound();
+          } else if (payload.eventType === 'UPDATE') {
+             setNotifications(prev => prev.map(n => 
+                n.id === payload.new.id 
+                ? { ...n, isRead: payload.new.is_read } 
+                : n
+             ));
+          }
+        }
+      )
+      
+      // Listen for Data Changes (Global Sync)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => refreshData())
+      
+      .subscribe((status) => {
+          // if (status === 'SUBSCRIBED') console.log('Realtime connected');
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session?.user?.id, refreshData]);
+
   // Initial Fetch
   useEffect(() => {
     if (session) {
-      // Don't set loading(true) here to avoid blocking UI on re-focus
       refreshData().finally(() => setLoading(false));
     }
   }, [session, refreshData]);
