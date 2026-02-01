@@ -104,22 +104,26 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
         finalTaskId = newTaskData.id;
       }
 
-      // --- SEND NOTIFICATIONS ---
+      // --- SEND NOTIFICATIONS (Safe Block) ---
       // Notify assigned users (except self)
-      if (finalTaskId && formData.assigneeIds.length > 0) {
-        const notificationsToInsert = formData.assigneeIds
-            .filter(id => id !== currentUser.id)
-            .map(userId => ({
-                user_id: userId,
-                type: 'task_assigned',
-                title: editingId ? 'Tarefa Atualizada' : 'Nova Tarefa Atribuída',
-                content: `Você foi marcado na tarefa: "${formData.title}"`,
-                related_id: finalTaskId
-            }));
-        
-        if (notificationsToInsert.length > 0) {
-            await supabase.from('notifications').insert(notificationsToInsert);
-        }
+      try {
+          if (finalTaskId && formData.assigneeIds.length > 0) {
+            const notificationsToInsert = formData.assigneeIds
+                .filter(id => id !== currentUser.id)
+                .map(userId => ({
+                    user_id: userId,
+                    type: 'task_assigned',
+                    title: editingId ? 'Tarefa Atualizada' : 'Nova Tarefa Atribuída',
+                    content: `Você foi marcado na tarefa: "${formData.title}"`,
+                    related_id: finalTaskId
+                }));
+            
+            if (notificationsToInsert.length > 0) {
+                await supabase.from('notifications').insert(notificationsToInsert);
+            }
+          }
+      } catch (notifyError) {
+          console.warn("Falha ao enviar notificação (não crítico):", notifyError);
       }
 
       onRefresh();

@@ -161,22 +161,25 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
         finalScheduleId = newSchedule.id;
       }
 
-      // --- NOTIFICATIONS ---
-      // Notify users assigned to roles (except self)
-      if (finalScheduleId) {
-          const usersToNotify = newRolesStructure
-            .filter(r => r.assignedUserId && r.assignedUserId !== currentUser.id)
-            .map(r => ({
-                user_id: r.assignedUserId,
-                type: 'schedule_update',
-                title: 'Escala Atualizada',
-                content: `Você foi escalado para: ${r.roleName} em "${formData.title}" (${new Date(formData.date).toLocaleDateString('pt-BR')})`,
-                related_id: finalScheduleId
-            }));
+      // --- NOTIFICATIONS (Safe Block) ---
+      try {
+        if (finalScheduleId) {
+            const usersToNotify = newRolesStructure
+              .filter(r => r.assignedUserId && r.assignedUserId !== currentUser.id)
+              .map(r => ({
+                  user_id: r.assignedUserId,
+                  type: 'schedule_update',
+                  title: 'Escala Atualizada',
+                  content: `Você foi escalado para: ${r.roleName} em "${formData.title}" (${new Date(formData.date).toLocaleDateString('pt-BR')})`,
+                  related_id: finalScheduleId
+              }));
 
-           if (usersToNotify.length > 0) {
-               await supabase.from('notifications').insert(usersToNotify);
-           }
+            if (usersToNotify.length > 0) {
+                await supabase.from('notifications').insert(usersToNotify);
+            }
+        }
+      } catch (notifyError) {
+        console.warn("Falha ao enviar notificação de escala:", notifyError);
       }
 
       onRefresh();

@@ -69,10 +69,18 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
     try {
       // Upload to 'avatars' bucket
       const { error: uploadError } = await supabase.storage
-        .from('avatars') // Make sure this bucket exists or use a generic one
+        .from('avatars') 
         .upload(filePath, file);
 
-      if (uploadError) throw uploadError;
+      if (uploadError) {
+         // Safe fail if bucket doesn't exist
+         if ((uploadError as any).error === 'Bucket not found' || (uploadError as any).statusCode === '404') {
+             alert("Aviso: O bucket 'avatars' não foi encontrado no Supabase. A foto não será atualizada.");
+             setLoading(false);
+             return;
+         }
+         throw uploadError;
+      }
 
       const { data: urlData } = supabase.storage.from('avatars').getPublicUrl(filePath);
       

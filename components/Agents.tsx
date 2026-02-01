@@ -33,13 +33,17 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
         
         if (error) throw error;
         
-        // Notify the user about promotion
-        await supabase.from('notifications').insert({
-            user_id: userId,
-            type: 'system',
-            title: 'Parabéns!',
-            content: `Você foi promovido a ${UserRole.ADMIN}.`
-        });
+        // Notify the user about promotion (Safe Block)
+        try {
+            await supabase.from('notifications').insert({
+                user_id: userId,
+                type: 'system',
+                title: 'Parabéns!',
+                content: `Você foi promovido a ${UserRole.ADMIN}.`
+            });
+        } catch (notifyError) {
+            console.warn("Falha ao enviar notificação de promoção:", notifyError);
+        }
 
         onRefresh();
     } catch (err: any) {
