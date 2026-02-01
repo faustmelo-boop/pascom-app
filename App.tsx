@@ -589,7 +589,7 @@ function App() {
            </div>
            
            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-               <span className="font-bold text-lg text-slate-800 tracking-tight">Pascom<span className="text-blue-600">Tasks</span></span>
+               <img src="https://i.imgur.com/ofoiwCd.png" alt="Pascom" className="h-8 w-auto object-contain" />
            </div>
 
            <div className="flex gap-2 items-center">
@@ -629,7 +629,7 @@ function App() {
         </header>
 
         {/* Content Render - Internal Scrolling */}
-        <div className="flex-1 overflow-y-auto scroll-smooth p-0 md:px-2">
+        <div className="flex-1 overflow-y-auto scroll-smooth p-0 md:px-2 hide-scroll">
             {renderContent()}
         </div>
       </main>
