@@ -66,6 +66,19 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // --- Service Worker Registration for Notifications ---
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('Service Worker Registered');
+        })
+        .catch((error) => {
+          console.error('Service Worker Registration Failed:', error);
+        });
+    }
+  }, []);
+
   // System Notification Logic
   const requestSystemNotificationPermission = useCallback(async () => {
     if (!('Notification' in window)) return;
@@ -75,15 +88,30 @@ function App() {
     }
   }, []);
 
-  const sendSystemNotification = (title: string, body: string) => {
+  const sendSystemNotification = async (title: string, body: string) => {
     if (Notification.permission === 'granted') {
       try {
-        // Cast options to any because 'vibrate' might not be in the TS definition for NotificationOptions in this environment
+        // Try to use Service Worker (Standard for Mobile PWA)
+        if ('serviceWorker' in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            if (registration && registration.showNotification) {
+                await registration.showNotification(title, {
+                    body: body,
+                    icon: 'https://i.imgur.com/ofoiwCd.png',
+                    vibrate: [200, 100, 200],
+                    tag: 'pascom-app'
+                } as any);
+                return;
+            }
+        }
+
+        // Fallback for Desktop if SW fails or is not ready
         new Notification(title, {
           body: body,
           icon: 'https://i.imgur.com/ofoiwCd.png', // Logo
           vibrate: [200, 100, 200]
         } as any);
+
       } catch (e) {
         console.warn('Notification failed', e);
       }
