@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppNotification } from '../types';
-import { Bell, Check, Clock, Calendar, CheckSquare, MessageCircle, Info, X, Trash2 } from 'lucide-react';
+import { Bell, Check, Clock, Calendar, CheckSquare, MessageCircle, Info, X, Trash2, Smartphone } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 
 interface NotificationsPanelProps {
@@ -10,6 +10,7 @@ interface NotificationsPanelProps {
   onMarkAsRead: (id: string) => void;
   onMarkAllAsRead: () => void;
   onClearAll: () => void;
+  onRequestSystemPermissions: () => void;
 }
 
 export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({ 
@@ -18,8 +19,25 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
   onClose, 
   onMarkAsRead,
   onMarkAllAsRead,
-  onClearAll
+  onClearAll,
+  onRequestSystemPermissions
 }) => {
+  const [permissionState, setPermissionState] = useState<NotificationPermission>('default');
+
+  useEffect(() => {
+    if ('Notification' in window) {
+      setPermissionState(Notification.permission);
+    }
+  }, [isOpen]);
+
+  const handleRequestPermission = () => {
+    onRequestSystemPermissions();
+    // Short delay to update UI after prompt
+    setTimeout(() => {
+       if ('Notification' in window) setPermissionState(Notification.permission);
+    }, 1000);
+  };
+
   if (!isOpen) return null;
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -79,6 +97,22 @@ export const NotificationsPanel: React.FC<NotificationsPanelProps> = ({
             </button>
           </div>
         </div>
+
+        {/* System Permission Prompt */}
+        {permissionState === 'default' && 'Notification' in window && (
+           <div className="bg-blue-50 p-3 border-b border-blue-100 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-800 text-xs font-medium">
+                  <Smartphone size={14} />
+                  <span>Receber avisos neste aparelho?</span>
+              </div>
+              <button 
+                onClick={handleRequestPermission}
+                className="text-xs bg-blue-600 text-white px-3 py-1.5 rounded-md font-bold hover:bg-blue-700 transition-colors"
+              >
+                Ativar
+              </button>
+           </div>
+        )}
 
         {/* List */}
         <div className="overflow-y-auto flex-1">

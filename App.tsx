@@ -66,6 +66,30 @@ function App() {
     return () => subscription.unsubscribe();
   }, []);
 
+  // System Notification Logic
+  const requestSystemNotificationPermission = useCallback(async () => {
+    if (!('Notification' in window)) return;
+    
+    if (Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
+  }, []);
+
+  const sendSystemNotification = (title: string, body: string) => {
+    if (Notification.permission === 'granted') {
+      try {
+        // Cast options to any because 'vibrate' might not be in the TS definition for NotificationOptions in this environment
+        new Notification(title, {
+          body: body,
+          icon: 'https://i.imgur.com/ofoiwCd.png', // Logo
+          vibrate: [200, 100, 200]
+        } as any);
+      } catch (e) {
+        console.warn('Notification failed', e);
+      }
+    }
+  };
+
   // Define fetch data function to be reusable
   const refreshData = useCallback(async () => {
     if (!session) return;
@@ -316,6 +340,7 @@ function App() {
              };
              setNotifications(prev => [newNotif, ...prev]);
              playNotificationSound();
+             sendSystemNotification(newNotif.title, newNotif.content);
           } else if (payload.eventType === 'UPDATE') {
              setNotifications(prev => prev.map(n => 
                 n.id === payload.new.id 
@@ -578,6 +603,7 @@ function App() {
             onMarkAsRead={handleMarkAsRead}
             onMarkAllAsRead={handleMarkAllAsRead}
             onClearAll={handleClearAll}
+            onRequestSystemPermissions={requestSystemNotificationPermission}
         />
 
         {/* Mobile Header */}
