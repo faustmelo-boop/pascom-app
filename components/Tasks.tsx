@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Task, TaskStatus, TaskPriority, User, UserRole } from '../types';
+import { Task, TaskStatus, TaskPriority, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { Calendar, CheckCircle2, Clock, AlertCircle, Plus, X, Save, Trash2, ArrowRight, ArrowLeft, MoreHorizontal, User as UserIcon, Loader2, AlertTriangle } from 'lucide-react';
 
@@ -38,7 +38,8 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
     tags: ''
   });
 
-  const isAdmin = currentUser.role === UserRole.ADMIN;
+  // Robust Admin Check unificado
+  const isAdmin = currentUser && isCoordinator(currentUser.role);
 
   // --- Handlers ---
 

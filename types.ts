@@ -3,6 +3,7 @@ export enum UserRole {
   ADMIN = 'Coordenador',
   AGENT = 'Agente',
   EDITOR = 'Editor',
+  TREASURER = 'Tesoureiro',
 }
 
 export enum TaskStatus {
@@ -21,11 +22,17 @@ export enum TaskPriority {
 export interface User {
   id: string;
   name: string;
-  role: UserRole;
+  role: UserRole | string;
   avatar: string;
   birthday: string; // ISO date
   skills: string[];
 }
+
+export const isCoordinator = (role: string | UserRole): boolean => {
+  if (!role) return false;
+  const r = String(role).toLowerCase();
+  return r === 'coordenador' || r === 'admin' || r.includes('coorden');
+};
 
 export interface Post {
   id: string;
@@ -101,6 +108,58 @@ export interface InventoryItem {
   status: 'Disponível' | 'Em Uso' | 'Em Manutenção';
   holderId?: string | null; // ID of the user holding the item
   image?: string;
+}
+
+export enum FinancialTransactionType {
+  INCOME = 'Entrada',
+  EXPENSE = 'Saída',
+  TRANSFER = 'Transferência',
+}
+
+export enum FinancialTransactionStatus {
+  PLANNED = 'Previsto',
+  PAID = 'Pago',
+  CANCELLED = 'Cancelado',
+  PENDING_APPROVAL = 'Aguardando Aprovação',
+}
+
+export interface FinancialAccount {
+  id: string;
+  name: string;
+  type: 'Caixa' | 'Banco' | 'PIX';
+  balance: number;
+}
+
+export interface FinancialCategory {
+  id: string;
+  name: string;
+  type: 'Entrada' | 'Saída';
+}
+
+export interface FinancialProject {
+  id: string;
+  name: string;
+  description?: string;
+  budgetPlanned: number;
+  budgetExecuted: number;
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface FinancialTransaction {
+  id: string;
+  type: FinancialTransactionType;
+  value: number;
+  date: string; // ISO date
+  categoryId: string;
+  accountId: string;
+  toAccountId?: string; // For transfers
+  projectId?: string;
+  paymentMethod: string;
+  description: string;
+  status: FinancialTransactionStatus;
+  attachmentUrl?: string;
+  createdAt: string;
 }
 
 export interface AppNotification {

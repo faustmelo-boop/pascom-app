@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScheduleEvent, User, UserRole } from '../types';
+import { ScheduleEvent, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { Calendar as CalendarIcon, User as UserIcon, Clock, Plus, Trash2, Edit2, X, Check, Loader2, Save, Users, AlertTriangle, ThumbsUp, ThumbsDown, MessageSquare } from 'lucide-react';
 
@@ -47,13 +47,8 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
     assignments: [{ userId: '', role: '' }],
   });
 
-  // Robust check for Admin role
-  const isAdmin = currentUser && (
-    currentUser.role === UserRole.ADMIN || 
-    (currentUser.role as string) === 'admin' || 
-    (currentUser.role as string) === 'Admin' ||
-    (typeof currentUser.role === 'string' && (currentUser.role as string).toLowerCase().includes('coorden'))
-  );
+  // Robust check for Admin role unificado
+  const isAdmin = currentUser && isCoordinator(currentUser.role);
 
   const getUser = (id?: string | null) => users.find((u) => u.id === id);
 

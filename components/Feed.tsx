@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Post, User, UserRole } from '../types';
+import { Post, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HeartHandshake, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List, MoreVertical, Smile } from 'lucide-react';
 
@@ -72,13 +72,8 @@ const PostCard: React.FC<{
   const author = users.find((u) => u.id === post.authorId);
   const [voteLoading, setVoteLoading] = useState(false);
   
-  // Robust Admin Check
-  const isAdmin = currentUser && (
-    currentUser.role === UserRole.ADMIN || 
-    (currentUser.role as string) === 'admin' || 
-    (currentUser.role as string) === 'Admin' ||
-    (typeof currentUser.role === 'string' && (currentUser.role as string).toLowerCase().includes('coorden'))
-  );
+  // Robust Admin Check unificado
+  const isAdmin = currentUser && isCoordinator(currentUser.role);
 
   const isAuthor = post.authorId === currentUser.id;
   const canDelete = isAuthor || isAdmin;

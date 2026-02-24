@@ -1,20 +1,25 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Pascom Tasks
 
-# Run and deploy your AI Studio app
+Plataforma de gestão integrada para a Pastoral da Comunicação.
 
-This contains everything you need to run your app locally.
+## 🚀 Deploy
 
-View your app in AI Studio: https://ai.studio/apps/drive/18fSI8UBk7t_lfUJpQw5tpD4LCbqUUeRp
+Você pode fazer o deploy deste projeto instantaneamente usando a Vercel:
 
-## Run Locally
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Ffaustmelo-boop%2Fpascom-app)
 
-**Prerequisites:**  Node.js
+## 🛠 Instalação Local
 
+1. Clone o repositório.
+2. Instale as dependências:
+   ```bash
+   npm install
+   ```
+3. Rode o projeto:
+   ```bash
+   npm run dev
+   ```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+## 📱 PWA
+
+O projeto está configurado como um Progressive Web App (PWA). Em dispositivos móveis, use a opção "Adicionar à Tela de Início" do navegador para instalar o app.
