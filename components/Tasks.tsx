@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Task, TaskStatus, TaskPriority, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
-import { Calendar, CheckCircle2, Clock, AlertCircle, Plus, X, Save, Trash2, ArrowRight, ArrowLeft, MoreHorizontal, User as UserIcon, Loader2, AlertTriangle } from 'lucide-react';
+import { Calendar, CheckCircle2, Clock, AlertCircle, Plus, X, Save, Trash2, ArrowRight, ArrowLeft, MoreHorizontal, User as UserIcon, Loader2, AlertTriangle, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
 
 interface TasksProps {
   tasks: Task[];
@@ -14,6 +14,8 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
+  const [currentDate, setCurrentDate] = useState(new Date());
 
   // Delete & Error States
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -317,6 +319,95 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
     )
   }
 
+  const CalendarView = () => {
+    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+    const firstDayOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1).getDay();
+    const monthName = currentDate.toLocaleString('pt-BR', { month: 'long' });
+    const year = currentDate.getFullYear();
+
+    const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+
+    const days = [];
+    // Previous month padding
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+    // Current month days
+    for (let i = 1; i <= daysInMonth; i++) {
+      days.push(i);
+    }
+
+    const getTasksForDay = (day: number) => {
+      const dateStr = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return tasks.filter(t => t.dueDate.startsWith(dateStr));
+    };
+
+    return (
+      <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
+          <h3 className="text-lg font-bold text-gray-800 capitalize">{monthName} {year}</h3>
+          <div className="flex gap-2">
+            <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600">
+              <ChevronLeft size={20} />
+            </button>
+            <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 text-xs font-medium bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-600">
+              Hoje
+            </button>
+            <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600">
+              <ChevronRight size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+          {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
+            <div key={day} className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              {day}
+            </div>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-7 flex-1 overflow-y-auto">
+          {days.map((day, idx) => {
+            const dayTasks = day ? getTasksForDay(day) : [];
+            const isToday = day && new Date().toDateString() === new Date(year, currentDate.getMonth(), day).toDateString();
+
+            return (
+              <div key={idx} className={`min-h-[100px] border-b border-r border-gray-100 p-1 flex flex-col gap-1 ${day ? 'bg-white' : 'bg-gray-50/30'}`}>
+                {day && (
+                  <>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>
+                        {day}
+                      </span>
+                    </div>
+                    <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] hide-scroll">
+                      {dayTasks.map(task => (
+                        <div 
+                          key={task.id}
+                          onClick={() => handleOpenModal(task)}
+                          className={`text-[9px] p-1 rounded border truncate cursor-pointer hover:brightness-95 transition-all ${
+                            task.status === TaskStatus.DONE ? 'bg-green-50 border-green-200 text-green-700' :
+                            task.priority === TaskPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700' :
+                            'bg-blue-50 border-blue-200 text-blue-700'
+                          }`}
+                          title={task.title}
+                        >
+                          {task.title}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="flex flex-col relative md:h-full md:overflow-hidden pb-20 md:pb-0">
       {/* Header */}
@@ -325,12 +416,31 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
             <h2 className="text-2xl font-bold text-gray-800">Fluxo de Tarefas</h2>
             <p className="text-sm text-gray-500">Gerencie atividades e projetos</p>
         </div>
-        <button 
-            onClick={() => handleOpenModal()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
-        >
-            <Plus size={18} /> Nova Tarefa
-        </button>
+        <div className="flex items-center gap-3">
+            {/* View Toggle */}
+            <div className="bg-gray-100 p-1 rounded-lg flex items-center gap-1">
+                <button 
+                    onClick={() => setViewMode('kanban')}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Visualização Kanban"
+                >
+                    <LayoutGrid size={18} />
+                </button>
+                <button 
+                    onClick={() => setViewMode('calendar')}
+                    className={`p-1.5 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
+                    title="Visualização Calendário"
+                >
+                    <Calendar size={18} />
+                </button>
+            </div>
+            <button 
+                onClick={() => handleOpenModal()}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+            >
+                <Plus size={18} /> Nova Tarefa
+            </button>
+        </div>
       </div>
 
        {/* Global Error Banner */}
@@ -348,20 +458,26 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
         </div>
       )}
 
-      {/* Kanban Board Container - Stacked on Mobile, Horizontal on Desktop */}
+      {/* Kanban Board or Calendar View */}
       <div className="p-4 md:p-6 md:flex-1 md:overflow-hidden md:min-h-0">
-          <div className="flex flex-col md:flex-row gap-6 md:h-full w-full">
-              {/* Wrapper for each column */}
-              <div className="w-full md:w-1/3 md:h-full">
-                <Column title="A Fazer" status={TaskStatus.TODO} />
-              </div>
-              <div className="w-full md:w-1/3 md:h-full">
-                <Column title="Em Andamento" status={TaskStatus.IN_PROGRESS} />
-              </div>
-              <div className="w-full md:w-1/3 md:h-full">
-                <Column title="Concluído" status={TaskStatus.DONE} />
-              </div>
-          </div>
+          {viewMode === 'kanban' ? (
+            <div className="flex flex-col md:flex-row gap-6 md:h-full w-full">
+                {/* Wrapper for each column */}
+                <div className="w-full md:w-1/3 md:h-full">
+                  <Column title="A Fazer" status={TaskStatus.TODO} />
+                </div>
+                <div className="w-full md:w-1/3 md:h-full">
+                  <Column title="Em Andamento" status={TaskStatus.IN_PROGRESS} />
+                </div>
+                <div className="w-full md:w-1/3 md:h-full">
+                  <Column title="Concluído" status={TaskStatus.DONE} />
+                </div>
+            </div>
+          ) : (
+            <div className="h-full">
+              <CalendarView />
+            </div>
+          )}
       </div>
 
       {/* CONFIRM DELETE MODAL */}

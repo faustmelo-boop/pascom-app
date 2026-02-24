@@ -1,7 +1,17 @@
 import React, { useState, useRef } from 'react';
 import { Post, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
-import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HeartHandshake, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List, MoreVertical, Smile } from 'lucide-react';
+import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HeartHandshake, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List, MoreVertical, Smile, Palette, MessageSquare, Shield, Copy, ExternalLink, Instagram, Facebook, Mail, Check, Eye, EyeOff } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
+// --- Obfuscated Credentials ---
+const DECODE = (str: string) => decodeURIComponent(escape(atob(str)));
+const CREDS = {
+  EMAIL: 'cGFzY29tZHJpdmVAZ21haWwuY29t', // pascomdrive@gmail.com
+  PASS_MAIN: 'cGFzNDJDT01zYXA=', // pas42COMsap
+  IG_USER: 'QG9hbnRvbmlvX3Nh', // @oantonio_sa
+  IG_PASS: 'Q29tdW5pY2HDp8Ojb1NhbnRvQW50b25pbzIwMjU=', // ComunicaçãoSantoAntonio2025
+};
 
 interface FeedProps {
   posts: Post[];
@@ -192,6 +202,21 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
   const textareaRef = useRef<HTMLTextAreaElement>(null); // Ref for focusing the post input
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  // Acessos Modal State
+  const [isAcessosModalOpen, setIsAcessosModalOpen] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
+
+  const togglePassword = (field: string) => {
+    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedField(field);
+    setTimeout(() => setCopiedField(null), 2000);
+  };
 
   const filteredPosts = activeFilter === 'Todos' 
     ? posts 
@@ -385,6 +410,49 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
 
   return (
     <div className="max-w-3xl mx-auto p-4 pb-20 lg:pb-8">
+      {/* Animated Quick Access Icons */}
+      <div className="flex items-center gap-6 overflow-x-auto pb-6 pt-2 hide-scroll px-2">
+        <motion.a
+          href="https://www.canva.com/folder/FAFp4SfexIc"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex flex-col items-center gap-2 min-w-[70px]"
+        >
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-blue-100">
+            <Palette size={24} />
+          </div>
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Canva</span>
+        </motion.a>
+
+        <motion.a
+          href="https://chatgpt.com/g/g-68419bbfb07c819188a4f51c99fc8fef-pascom-diocese-de-santa-luzia"
+          target="_blank"
+          rel="noopener noreferrer"
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex flex-col items-center gap-2 min-w-[70px]"
+        >
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white shadow-lg shadow-slate-200">
+            <MessageSquare size={24} />
+          </div>
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Copy</span>
+        </motion.a>
+
+        <motion.button
+          onClick={() => setIsAcessosModalOpen(true)}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.95 }}
+          className="flex flex-col items-center gap-2 min-w-[70px]"
+        >
+          <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-white shadow-lg shadow-emerald-100">
+            <Shield size={24} />
+          </div>
+          <span className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">Acessos</span>
+        </motion.button>
+      </div>
+
       {/* Main Feed Column */}
       <div className="space-y-6">
         
@@ -536,6 +604,182 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
               </div>
           </div>
       )}
+
+      {/* ACESSOS MODAL */}
+      <AnimatePresence>
+        {isAcessosModalOpen && (
+          <div className="fixed inset-0 z-[80] flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsAcessosModalOpen(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <Shield size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900">Acessos Pascom</h3>
+                    <p className="text-xs text-slate-500">Credenciais das redes sociais</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsAcessosModalOpen(false)}
+                  className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6">
+                {/* Email / Drive */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                      <Mail size={16} className="text-blue-500" />
+                      <span>E-mail / Google Drive</span>
+                    </div>
+                    <a
+                      href={`https://accounts.google.com/AccountChooser?service=mail&continue=https://mail.google.com/mail/&Email=${DECODE(CREDS.EMAIL)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Acessar <ExternalLink size={10} />
+                    </a>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Login</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.EMAIL)}</span>
+                        <button onClick={() => handleCopy(DECODE(CREDS.EMAIL), 'email-login')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                          {copiedField === 'email-login' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-200/60">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-mono font-medium text-slate-700">
+                          {showPasswords['email-pass'] ? DECODE(CREDS.PASS_MAIN) : '••••••••••••'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => togglePassword('email-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
+                            {showPasswords['email-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button onClick={() => handleCopy(DECODE(CREDS.PASS_MAIN), 'email-pass')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                            {copiedField === 'email-pass' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Instagram */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                      <Instagram size={16} className="text-pink-500" />
+                      <span>Instagram</span>
+                    </div>
+                    <a
+                      href={`https://www.instagram.com/${DECODE(CREDS.IG_USER).replace('@', '')}/`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Acessar <ExternalLink size={10} />
+                    </a>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Usuário</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.IG_USER)}</span>
+                        <button onClick={() => handleCopy(DECODE(CREDS.IG_USER), 'ig-login')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                          {copiedField === 'ig-login' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-200/60">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-mono font-medium text-slate-700">
+                          {showPasswords['ig-pass'] ? DECODE(CREDS.IG_PASS) : '••••••••••••'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => togglePassword('ig-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
+                            {showPasswords['ig-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button onClick={() => handleCopy(DECODE(CREDS.IG_PASS), 'ig-pass')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                            {copiedField === 'ig-pass' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Facebook */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                      <Facebook size={16} className="text-blue-700" />
+                      <span>Facebook</span>
+                    </div>
+                    <a
+                      href="https://www.facebook.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
+                    >
+                      Acessar <ExternalLink size={10} />
+                    </a>
+                  </div>
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
+                    <div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Login</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.EMAIL)}</span>
+                        <button onClick={() => handleCopy(DECODE(CREDS.EMAIL), 'fb-login')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                          {copiedField === 'fb-login' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="pt-3 border-t border-slate-200/60">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-mono font-medium text-slate-700">
+                          {showPasswords['fb-pass'] ? DECODE(CREDS.PASS_MAIN) : '••••••••••••'}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => togglePassword('fb-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
+                            {showPasswords['fb-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
+                          </button>
+                          <button onClick={() => handleCopy(DECODE(CREDS.PASS_MAIN), 'fb-pass')} className="text-slate-400 hover:text-blue-600 transition-colors">
+                            {copiedField === 'fb-pass' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
