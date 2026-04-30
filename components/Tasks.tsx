@@ -1,7 +1,15 @@
-import React, { useState } from 'react';
-import { Task, TaskStatus, TaskPriority, User, UserRole, isCoordinator } from '../types';
+import React, { useState, useMemo } from 'react';
+import { Task, TaskStatus, TaskPriority, User, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
-import { Calendar, CheckCircle2, Clock, AlertCircle, Plus, X, Save, Trash2, ArrowRight, ArrowLeft, MoreHorizontal, User as UserIcon, Loader2, AlertTriangle, ChevronLeft, ChevronRight, LayoutGrid } from 'lucide-react';
+import { 
+  Calendar as CalendarIcon, CheckCircle2, Clock, 
+  AlertCircle, Plus, X, Save, Trash2, ArrowRight, 
+  MoreHorizontal, User as UserIcon, Loader2, 
+  AlertTriangle, ChevronLeft, ChevronRight, LayoutGrid,
+  Search, Filter, CalendarDays, Kanban as KanbanIcon,
+  Check, Circle, ChevronDown, Edit2
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface TasksProps {
   tasks: Task[];
@@ -16,6 +24,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   const [loading, setLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'calendar'>('kanban');
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [searchTerm, setSearchTerm] = useState('');
 
   // Delete & Error States
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -40,8 +49,14 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
     tags: ''
   });
 
-  // Robust Admin Check unificado
-  const isAdmin = currentUser && isCoordinator(currentUser.role);
+  // Filtered Tasks
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(t => 
+      t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (t.description && t.description.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      t.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [tasks, searchTerm]);
 
   // --- Handlers ---
 
@@ -66,7 +81,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
         dueDate: new Date().toISOString().split('T')[0],
         priority: TaskPriority.MEDIUM,
         status: TaskStatus.TODO,
-        assigneeIds: [],
+        assigneeIds: [currentUser.id],
         tags: ''
       });
     }
@@ -108,7 +123,6 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
       }
 
       // --- SEND NOTIFICATIONS (Safe Block) ---
-      // Notify assigned users (except self)
       try {
           if (finalTaskId && formData.assigneeIds.length > 0) {
             const notificationsToInsert = formData.assigneeIds
@@ -143,7 +157,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   };
 
   const onRequestDelete = (e: React.MouseEvent) => {
-    e.preventDefault(); // prevent form submit if inside form
+    e.preventDefault();
     if (editingId) {
         setDeleteId(editingId);
     }
@@ -161,39 +175,18 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
       
       onRefresh();
       setDeleteId(null);
-      setIsModalOpen(false); // Close the edit modal as well since the task is gone
+      setIsModalOpen(false);
     } catch (error: any) {
         console.error("Error deleting task:", error);
-        
-        let customError = {
-            title: "Erro ao excluir",
-            msg: error.message,
-            code: error.code
-        };
-
+        let customError = { title: "Erro ao excluir", msg: error.message, code: error.code };
         if (error.code === '42501') {
             customError.title = "Permissão Negada (RLS)";
             customError.msg = "O Supabase bloqueou a exclusão. Verifique as Policies da tabela 'tasks'.";
         }
-        
         setGlobalError(customError);
-        setDeleteId(null); // Close confirm modal to show error on main modal
+        setDeleteId(null);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const changeStatus = async (task: Task, newStatus: TaskStatus) => {
-    try {
-      const { error } = await supabase
-        .from('tasks')
-        .update({ status: newStatus })
-        .eq('id', task.id);
-      
-      if (error) throw error;
-      onRefresh();
-    } catch (error) {
-      console.error('Error changing status', error);
     }
   };
 
@@ -214,105 +207,121 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
     const assignees = users.filter((u) => task.assigneeIds.includes(u.id));
     
     const priorityColors = {
-      [TaskPriority.HIGH]: 'bg-red-100 text-red-700 border-red-200',
-      [TaskPriority.MEDIUM]: 'bg-orange-100 text-orange-700 border-orange-200',
-      [TaskPriority.LOW]: 'bg-green-100 text-green-700 border-green-200',
+      [TaskPriority.HIGH]: 'bg-rose-50 text-rose-600 border-rose-100',
+      [TaskPriority.MEDIUM]: 'bg-brand-yellow/10 text-brand-yellow border-brand-yellow/20',
+      [TaskPriority.LOW]: 'bg-brand-green/10 text-brand-green border-brand-green/20',
     };
 
     return (
-      <div 
+      <motion.div 
+        layout
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        whileHover={{ y: -4, scale: 1.02 }}
         onClick={() => handleOpenModal(task)}
-        className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:shadow-lg hover:-translate-y-1 hover:border-blue-200 transition-all duration-300 cursor-pointer group mb-3 relative shrink-0"
+        className="bento-card bg-white p-6 shadow-[0_12px_24px_-10px_rgba(0,0,0,0.05)] hover:shadow-[0_24px_48px_-12px_rgba(0,0,0,0.08)] hover:border-brand-blue/30 transition-all cursor-pointer group mb-4 relative flex flex-col min-h-[180px] border border-slate-100/50"
       >
-        <div className="flex justify-between items-start mb-2">
-          <span className={`text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${priorityColors[task.priority]}`}>
-            {task.priority}
-          </span>
-          {/* Quick Actions overlay on hover */}
-          <div className="opacity-0 group-hover:opacity-100 transition-opacity absolute top-2 right-2 bg-white/90 p-1 rounded-md shadow-sm border border-gray-100 flex gap-1">
-             <button title="Editar" className="p-1 hover:bg-gray-100 rounded text-gray-600"><MoreHorizontal size={14} /></button>
+        <div className="flex justify-between items-start mb-4">
+          <div className="flex items-center gap-2">
+            <span className={`text-[8px] font-black uppercase tracking-[0.2em] px-2.5 py-1 rounded-[0.5rem] border ${priorityColors[task.priority]}`}>
+              {task.priority}
+            </span>
+            {task.status === TaskStatus.DONE && (
+              <span className="bg-brand-green/10 text-brand-green px-2 py-1 rounded-[0.5rem] border border-brand-green/20 text-[8px] font-black uppercase tracking-[0.2em]">Concluída</span>
+            )}
+          </div>
+          <div className="p-2 transition-all group-hover:bg-brand-blue/5 group-hover:text-brand-blue text-slate-300 rounded-xl">
+             <MoreHorizontal size={16} />
           </div>
         </div>
         
-        <h4 className="font-semibold text-gray-800 text-sm mb-1 leading-tight">{task.title}</h4>
-        {task.description && <p className="text-xs text-gray-500 line-clamp-2 mb-3">{task.description}</p>}
+        <h4 className="text-slate-800 text-base mb-2 leading-tight tracking-tight group-hover:text-brand-blue transition-colors font-black">{task.title}</h4>
+        {task.description && <p className="text-[11px] text-slate-400 font-medium line-clamp-2 mb-4 leading-relaxed font-sans italic opacity-80">{task.description}</p>}
         
-        <div className="flex flex-wrap gap-1 mb-3">
+        <div className="flex flex-wrap gap-1.5 mt-auto mb-5">
             {task.tags.map(tag => (
-                <span key={tag} className="text-[10px] bg-gray-50 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200">{tag}</span>
+                <span key={tag} className="text-[8px] font-black bg-slate-50 text-slate-400 px-2.5 py-1 rounded-full border border-slate-100 uppercase tracking-widest group-hover:bg-brand-blue/5 transition-colors">{tag}</span>
             ))}
         </div>
 
-        <div className="flex items-center justify-between border-t border-gray-50 pt-2 mt-auto">
-          <div className="flex -space-x-2">
-            {assignees.length > 0 ? assignees.map((a) => (
-              <img key={a.id} src={a.avatar} alt={a.name} className="w-6 h-6 rounded-full border-2 border-white object-cover" title={a.name} />
+        <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+          <div className="flex -space-x-3">
+            {assignees.length > 0 ? assignees.slice(0, 3).map((a) => (
+              <img key={a.id} src={a.avatar} alt={a.name} className="w-8 h-8 rounded-xl border-4 border-white object-cover shadow-sm ring-1 ring-slate-100/50" title={a.name} />
             )) : (
-                <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-gray-400">
+                <div className="w-8 h-8 rounded-xl border-4 border-white bg-slate-50 flex items-center justify-center text-slate-200 ring-1 ring-slate-100/50">
                     <UserIcon size={12} />
                 </div>
             )}
+            {assignees.length > 3 && (
+              <div className="w-8 h-8 rounded-xl border-4 border-white bg-slate-100 flex items-center justify-center text-[8px] font-black text-slate-400 tracking-tighter ring-1 ring-slate-100/50">
+                +{assignees.length - 3}
+              </div>
+            )}
           </div>
-          <div className="flex items-center gap-1 text-xs text-gray-400">
-            <Calendar size={12} />
+          <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase tracking-[0.1em] bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100 group-hover:text-brand-blue transition-colors">
+            <CalendarIcon size={12} />
             <span>{new Date(task.dueDate).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}</span>
           </div>
         </div>
-
-        {/* Workflow Arrows */}
-        <div className="flex justify-end gap-2 mt-3 pt-2 border-t border-gray-50" onClick={(e) => e.stopPropagation()}>
-           {task.status !== TaskStatus.TODO && (
-               <button 
-                onClick={() => changeStatus(task, task.status === TaskStatus.DONE ? TaskStatus.IN_PROGRESS : TaskStatus.TODO)}
-                className="text-xs flex items-center gap-1 text-gray-500 hover:text-blue-600 px-2 py-1 rounded hover:bg-blue-50 transition-colors"
-               >
-                 <ArrowLeft size={12} /> Voltar
-               </button>
-           )}
-           {task.status !== TaskStatus.DONE && (
-               <button 
-                onClick={() => changeStatus(task, task.status === TaskStatus.TODO ? TaskStatus.IN_PROGRESS : TaskStatus.DONE)}
-                className="text-xs flex items-center gap-1 text-blue-600 font-medium hover:bg-blue-50 px-2 py-1 rounded transition-colors ml-auto"
-               >
-                 Avançar <ArrowRight size={12} />
-               </button>
-           )}
-        </div>
-      </div>
+      </motion.div>
     );
   };
 
   const Column: React.FC<{ title: string; status: TaskStatus }> = ({ title, status }) => {
-    const icon = 
-        status === TaskStatus.TODO ? <AlertCircle size={18} className="text-gray-500" /> :
-        status === TaskStatus.IN_PROGRESS ? <Clock size={18} className="text-blue-500" /> :
-        <CheckCircle2 size={18} className="text-green-600" />;
+    const colors: Record<string, { bg: string; text: string; icon: React.FC<any>; brand: string }> = {
+      [TaskStatus.TODO]: { bg: 'bg-slate-100/40', text: 'text-slate-500', icon: AlertCircle, brand: 'slate' },
+      [TaskStatus.IN_PROGRESS]: { bg: 'bg-brand-blue/5', text: 'text-brand-blue', icon: Clock, brand: 'brand-blue' },
+      [TaskStatus.REVIEW]: { bg: 'bg-brand-yellow/5', text: 'text-brand-yellow', icon: AlertCircle, brand: 'brand-yellow' },
+      [TaskStatus.DONE]: { bg: 'bg-brand-green/5', text: 'text-brand-green', icon: CheckCircle2, brand: 'brand-green' },
+    };
 
-    const columnTasks = tasks.filter(t => t.status === status);
+    const config = colors[status] || colors[TaskStatus.TODO];
+    const Icon = config.icon;
+    const columnTasks = filteredTasks.filter(t => t.status === status);
 
     return (
-        <div className="flex flex-col bg-gray-100/50 rounded-xl border border-gray-200/50 h-auto md:h-full">
-            <div className="p-4 flex items-center justify-between sticky top-0 bg-gray-100/90 backdrop-blur-sm z-10 rounded-t-xl shrink-0 border-b border-gray-200/50">
-                <div className="flex items-center gap-2 font-bold text-gray-700">
-                    {icon}
-                    <h3>{title}</h3>
-                    <span className="bg-white text-gray-600 text-xs px-2 py-0.5 rounded-full border border-gray-200 shadow-sm">{columnTasks.length}</span>
+        <div className={`flex flex-col h-full ${config.bg} rounded-[2.5rem] p-4 border border-slate-100/50 shadow-sm transition-all`}>
+            <div className="p-4 flex items-center justify-between shrink-0 mb-4">
+                <div className="flex items-center gap-4">
+                    <div className={`p-3 bg-white rounded-2xl shadow-sm border border-slate-100 ${config.text}`}>
+                      <Icon size={20} strokeWidth={3} />
+                    </div>
+                    <div>
+                      <h3 className="font-black text-slate-800 tracking-tight text-lg leading-none mb-1.5">{title}</h3>
+                      <div className="flex items-center gap-2">
+                        <span className={`w-1.5 h-1.5 rounded-full ${status === TaskStatus.TODO ? 'bg-slate-300' : status === TaskStatus.IN_PROGRESS ? 'bg-brand-blue' : 'bg-brand-green'}`} />
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">{columnTasks.length} TAREFAS</p>
+                      </div>
+                    </div>
                 </div>
                 {status === TaskStatus.TODO && (
-                    <button onClick={() => handleOpenModal()} className="text-gray-500 hover:text-blue-600 hover:bg-blue-50 p-1 rounded transition-colors">
-                        <Plus size={20} />
+                    <button 
+                      onClick={() => handleOpenModal()} 
+                      className="p-3 bg-white text-brand-blue hover:bg-brand-blue hover:text-white rounded-2xl transition-all border border-slate-100 shadow-sm active:scale-95"
+                    >
+                        <Plus size={20} strokeWidth={3} />
                     </button>
                 )}
             </div>
-            {/* Scrollable Area for tasks - On mobile it expands, on desktop it scrolls */}
-            <div className="p-3 space-y-3 md:overflow-y-auto md:flex-1 hide-scroll">
-                {columnTasks.map(task => (
-                    <TaskCard key={task.id} task={task} />
-                ))}
+            <div className="space-y-2 flex-1 overflow-y-auto hide-scroll pb-10 px-1">
+                <AnimatePresence mode="popLayout">
+                  {columnTasks.map(task => (
+                      <TaskCard key={task.id} task={task} />
+                  ))}
+                </AnimatePresence>
                 {columnTasks.length === 0 && (
-                    <div className="text-center py-10 text-gray-400 border-2 border-dashed border-gray-200 rounded-xl">
-                        <p className="text-sm">Vazio</p>
-                    </div>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-center py-24 bg-white/40 border-2 border-dashed border-slate-200/50 rounded-[2.5rem] flex flex-col items-center gap-4"
+                    >
+                        <div className="w-16 h-16 bg-white/60 rounded-3xl flex items-center justify-center text-slate-200 shadow-sm">
+                           <LayoutGrid size={32} />
+                        </div>
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic opacity-60 px-8">Nada nesta coluna por enquanto...</p>
+                    </motion.div>
                 )}
             </div>
         </div>
@@ -328,74 +337,110 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
     const prevMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
     const nextMonth = () => setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
 
-    const days = [];
-    // Previous month padding
+    const weeks = [];
+    let week: (number | null)[] = [];
+
+    // Padding for first week
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(null);
+      week.push(null);
     }
-    // Current month days
+
     for (let i = 1; i <= daysInMonth; i++) {
-      days.push(i);
+      week.push(i);
+      if (week.length === 7) {
+        weeks.push(week);
+        week = [];
+      }
+    }
+
+    // Padding for last week
+    if (week.length > 0) {
+      while (week.length < 7) {
+        week.push(null);
+      }
+      weeks.push(week);
     }
 
     const getTasksForDay = (day: number) => {
       const dateStr = `${year}-${String(currentDate.getMonth() + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-      return tasks.filter(t => t.dueDate.startsWith(dateStr));
+      return filteredTasks.filter(t => t.dueDate.startsWith(dateStr));
     };
 
     return (
-      <div className="flex flex-col h-full bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50">
-          <h3 className="text-lg font-bold text-gray-800 capitalize">{monthName} {year}</h3>
-          <div className="flex gap-2">
-            <button onClick={prevMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600">
-              <ChevronLeft size={20} />
+      <div className="flex flex-col h-full bg-white rounded-[3rem] border border-slate-100 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)] overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        {/* Calendar Header */}
+        <div className="px-10 py-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
+          <div>
+            <h3 className="text-3xl font-black text-slate-800 capitalize tracking-tight leading-none mb-2">{monthName}</h3>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em]">{year}</p>
+          </div>
+          <div className="flex items-center gap-4 bg-white p-2 rounded-[1.5rem] shadow-sm border border-slate-100">
+            <button onClick={prevMonth} className="p-3 hover:bg-slate-50 text-slate-400 hover:text-brand-blue rounded-xl transition-all active:scale-90">
+              <ChevronLeft size={24} />
             </button>
-            <button onClick={() => setCurrentDate(new Date())} className="px-3 py-1 text-xs font-medium bg-white border border-gray-200 rounded-md hover:bg-gray-50 transition-colors text-gray-600">
+            <button 
+              onClick={() => setCurrentDate(new Date())} 
+              className="px-6 py-2.5 text-[10px] font-black uppercase tracking-widest bg-slate-900 text-white rounded-xl hover:scale-105 active:scale-95 transition-all shadow-lg"
+            >
               Hoje
             </button>
-            <button onClick={nextMonth} className="p-2 hover:bg-gray-200 rounded-lg transition-colors text-gray-600">
-              <ChevronRight size={20} />
+            <button onClick={nextMonth} className="p-3 hover:bg-slate-50 text-slate-400 hover:text-brand-blue rounded-xl transition-all active:scale-90">
+              <ChevronRight size={24} />
             </button>
           </div>
         </div>
 
-        <div className="grid grid-cols-7 border-b border-gray-100 bg-gray-50/50">
+        {/* Days Header */}
+        <div className="grid grid-cols-7 border-b border-slate-100">
           {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(day => (
-            <div key={day} className="py-2 text-center text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+            <div key={day} className="py-6 text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] border-r border-slate-50 last:border-r-0 italic opacity-60">
               {day}
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-7 flex-1 overflow-y-auto">
-          {days.map((day, idx) => {
+        {/* Calendar Grid */}
+        <div className="grid grid-cols-7 flex-1">
+          {weeks.flat().map((day, idx) => {
             const dayTasks = day ? getTasksForDay(day) : [];
             const isToday = day && new Date().toDateString() === new Date(year, currentDate.getMonth(), day).toDateString();
+            const isWeekend = idx % 7 === 0 || idx % 7 === 6;
 
             return (
-              <div key={idx} className={`min-h-[100px] border-b border-r border-gray-100 p-1 flex flex-col gap-1 ${day ? 'bg-white' : 'bg-gray-50/30'}`}>
+              <div 
+                key={idx} 
+                className={`min-h-[140px] border-b border-r border-slate-50 p-4 transition-all group ${
+                  day ? 'bg-white hover:bg-slate-50/30' : 'bg-slate-50/20'
+                } ${idx % 7 === 6 ? 'border-r-0' : ''}`}
+              >
                 {day && (
                   <>
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={`text-xs font-bold w-6 h-6 flex items-center justify-center rounded-full ${isToday ? 'bg-blue-600 text-white' : 'text-gray-400'}`}>
+                    <div className="flex justify-between items-center mb-4">
+                      <span className={`text-xs font-black w-8 h-8 flex items-center justify-center rounded-xl transition-all ${
+                        isToday 
+                        ? 'bg-brand-blue text-white shadow-xl shadow-brand-blue/30 scale-110 mb-1' 
+                        : isWeekend ? 'text-slate-300' : 'text-slate-800'
+                      }`}>
                         {day}
                       </span>
                     </div>
-                    <div className="flex flex-col gap-1 overflow-y-auto max-h-[80px] hide-scroll">
+                    <div className="space-y-1.5 max-h-[100px] overflow-y-auto hide-scroll">
                       {dayTasks.map(task => (
-                        <div 
+                        <motion.div 
+                          layoutId={task.id}
                           key={task.id}
                           onClick={() => handleOpenModal(task)}
-                          className={`text-[9px] p-1 rounded border truncate cursor-pointer hover:brightness-95 transition-all ${
-                            task.status === TaskStatus.DONE ? 'bg-green-50 border-green-200 text-green-700' :
-                            task.priority === TaskPriority.HIGH ? 'bg-red-50 border-red-200 text-red-700' :
-                            'bg-blue-50 border-blue-200 text-blue-700'
-                          }`}
+                          className={`text-[9px] font-black p-2 rounded-xl border truncate cursor-pointer transition-all uppercase tracking-tight ${
+                            task.status === TaskStatus.DONE 
+                            ? 'bg-brand-green/10 border-brand-green/20 text-brand-green line-through opacity-60' :
+                            task.priority === TaskPriority.HIGH 
+                            ? 'bg-rose-50 border-rose-100 text-rose-600' :
+                            'bg-brand-blue/5 border-brand-blue/10 text-brand-blue'
+                          } hover:scale-[1.03] active:scale-95 shadow-sm`}
                           title={task.title}
                         >
                           {task.title}
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
                   </>
@@ -409,69 +454,87 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   };
 
   return (
-    <div className="flex flex-col relative md:h-full md:overflow-hidden pb-20 md:pb-0">
-      {/* Header */}
-      <div className="p-4 md:p-6 pb-0 flex justify-between items-center shrink-0">
-        <div>
-            <h2 className="text-2xl font-bold text-gray-800">Fluxo de Tarefas</h2>
-            <p className="text-sm text-gray-500">Gerencie atividades e projetos</p>
+    <div className="max-w-7xl mx-auto p-4 md:p-10 space-y-10 animate-in fade-in duration-1000">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-6">
+        <div className="animate-in slide-in-from-left-8 duration-700">
+          <div className="flex items-center gap-4 mb-4">
+            <div className="w-14 h-14 bg-brand-blue rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-brand-blue/30 rotate-3">
+              {viewMode === 'kanban' ? <KanbanIcon size={28} /> : <CalendarIcon size={28} />}
+            </div>
+            <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Produção Ativa</p>
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Tarefas</h1>
+          <p className="text-slate-400 font-medium text-lg italic mt-2">Sincronize o ritmo das atividades pastorais.</p>
         </div>
-        <div className="flex items-center gap-3">
-            {/* View Toggle */}
-            <div className="bg-gray-100 p-1 rounded-lg flex items-center gap-1">
+
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 animate-in slide-in-from-right-8 duration-700">
+            {/* Search & Filter */}
+            <div className="relative group min-w-[240px]">
+                <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-blue transition-all" size={20} />
+                <input 
+                  type="text" 
+                  placeholder="Buscar tarefa..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-14 pr-8 py-4 bg-white rounded-[1.8rem] border border-slate-100 shadow-sm outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue font-bold text-sm transition-all"
+                />
+            </div>
+
+            <div className="bg-white border border-slate-100 p-2 rounded-[2rem] flex items-center gap-2 shadow-xl shadow-slate-200/20">
                 <button 
                     onClick={() => setViewMode('kanban')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'kanban' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Visualização Kanban"
+                    className={`flex items-center gap-2 px-5 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'kanban' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20 ring-4 ring-brand-blue/10' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-50'}`}
                 >
-                    <LayoutGrid size={18} />
+                    <LayoutGrid size={16} /> Quadro
                 </button>
                 <button 
                     onClick={() => setViewMode('calendar')}
-                    className={`p-1.5 rounded-md transition-all ${viewMode === 'calendar' ? 'bg-white shadow-sm text-blue-600' : 'text-gray-500 hover:text-gray-700'}`}
-                    title="Visualização Calendário"
+                    className={`flex items-center gap-2 px-5 py-3 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${viewMode === 'calendar' ? 'bg-brand-blue text-white shadow-lg shadow-brand-blue/20 ring-4 ring-brand-blue/10' : 'text-slate-400 hover:text-slate-800 hover:bg-slate-50'}`}
                 >
-                    <Calendar size={18} />
+                    <CalendarDays size={16} /> Agenda
                 </button>
             </div>
+
             <button 
-                onClick={() => handleOpenModal()}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+              onClick={() => handleOpenModal()}
+              className="bg-slate-900 text-white px-8 py-5 rounded-[1.8rem] font-black text-xs uppercase tracking-widest transition-all shadow-[0_20px_40px_-12px_rgba(15,23,42,0.3)] flex items-center justify-center gap-3 hover:scale-105 active:scale-95"
             >
-                <Plus size={18} /> Nova Tarefa
+              <Plus size={20} strokeWidth={3} /> Criar Atividade
             </button>
         </div>
-      </div>
+      </header>
 
        {/* Global Error Banner */}
-       {globalError && (
-        <div className="m-4 md:m-6 mb-0 bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg shadow-sm animate-fade-in flex items-start gap-3 shrink-0">
-            <AlertTriangle className="text-red-500 shrink-0 mt-0.5" size={20} />
-            <div className="flex-1">
-                <h3 className="text-red-800 font-bold text-sm">{globalError.title}</h3>
-                <p className="text-red-700 text-sm mt-1 whitespace-pre-wrap">{globalError.msg}</p>
-                {globalError.code && <span className="text-xs text-red-400 mt-2 block font-mono">Code: {globalError.code}</span>}
-            </div>
-            <button onClick={() => setGlobalError(null)} className="text-red-400 hover:text-red-600">
-                <X size={18} />
-            </button>
-        </div>
-      )}
+       <AnimatePresence>
+        {globalError && (
+            <motion.div 
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-rose-50 border border-rose-100 p-6 rounded-[2rem] flex items-start gap-5 shadow-xl shadow-rose-200/20"
+            >
+                <div className="p-3 bg-rose-100 text-rose-600 rounded-2xl shadow-sm">
+                  <AlertTriangle size={24} strokeWidth={3} />
+                </div>
+                <div className="flex-1">
+                    <h3 className="text-rose-900 font-extrabold tracking-tight">Ops! Algo deu errado</h3>
+                    <p className="text-rose-700/80 text-sm mt-1 font-medium italic">{globalError.msg}</p>
+                </div>
+                <button onClick={() => setGlobalError(null)} className="p-2 text-rose-300 hover:text-rose-600 transition-all rounded-xl hover:bg-white active:scale-90">
+                    <X size={20} strokeWidth={3} />
+                </button>
+            </motion.div>
+        )}
+       </AnimatePresence>
 
       {/* Kanban Board or Calendar View */}
-      <div className="p-4 md:p-6 md:flex-1 md:overflow-hidden md:min-h-0">
+      <div className="min-h-[700px] pb-20">
           {viewMode === 'kanban' ? (
-            <div className="flex flex-col md:flex-row gap-6 md:h-full w-full">
-                {/* Wrapper for each column */}
-                <div className="w-full md:w-1/3 md:h-full">
-                  <Column title="A Fazer" status={TaskStatus.TODO} />
-                </div>
-                <div className="w-full md:w-1/3 md:h-full">
-                  <Column title="Em Andamento" status={TaskStatus.IN_PROGRESS} />
-                </div>
-                <div className="w-full md:w-1/3 md:h-full">
-                  <Column title="Concluído" status={TaskStatus.DONE} />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 items-start">
+                <Column title="A Fazer" status={TaskStatus.TODO} />
+                <Column title="Evoluindo" status={TaskStatus.IN_PROGRESS} />
+                <Column title="Revisão" status={TaskStatus.REVIEW} />
+                <Column title="Finalizado" status={TaskStatus.DONE} />
             </div>
           ) : (
             <div className="h-full">
@@ -481,174 +544,270 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
       </div>
 
       {/* CONFIRM DELETE MODAL */}
-      {deleteId && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full text-center">
-                  <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <AlertTriangle size={24} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Tarefa?</h3>
-                  <p className="text-sm text-gray-600 mb-6">Esta ação não pode ser desfeita. A tarefa será removida permanentemente.</p>
-                  
-                  <div className="flex gap-3">
-                      <button 
-                        onClick={() => setDeleteId(null)} 
-                        className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                        disabled={loading}
-                      >
-                          Cancelar
-                      </button>
-                      <button 
-                        onClick={confirmDelete}
-                        disabled={loading}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center gap-2"
-                      >
-                          {loading && <Loader2 size={16} className="animate-spin" />}
-                          Excluir
-                      </button>
-                  </div>
-              </div>
-          </div>
-      )}
-
-      {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-              <h3 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Tarefa' : 'Nova Tarefa'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 space-y-5">
-              {/* Title & Status Row */}
-              <div className="flex gap-4">
-                  <div className="flex-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Título</label>
-                    <input 
-                        type="text" 
-                        value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none placeholder-gray-500"
-                        placeholder="Ex: Criar arte para Missa"
-                    />
-                  </div>
-                  <div className="w-1/3">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select 
-                        value={formData.status}
-                        onChange={(e) => setFormData({...formData, status: e.target.value as TaskStatus})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
-                    >
-                        {Object.values(TaskStatus).map(s => <option key={s} value={s}>{s}</option>)}
-                    </select>
-                  </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                <textarea 
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    rows={3}
-                    className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none resize-none placeholder-gray-500"
-                    placeholder="Detalhes da tarefa..."
+      <AnimatePresence>
+        {deleteId && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
+                    onClick={() => setDeleteId(null)}
                 />
-              </div>
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-10"
+                >
+                    <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
+                        <Trash2 size={32} strokeWidth={2.5} />
+                    </div>
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Excluir Tarefa?</h3>
+                    <p className="text-sm text-slate-400 font-medium mb-10 leading-relaxed px-4">Esta decisão é irreversível. Todas as informações desta atividade serão permanentemente removidas.</p>
+                    
+                    <div className="flex gap-4">
+                        <button 
+                          onClick={() => setDeleteId(null)} 
+                          className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
+                          disabled={loading}
+                        >
+                            Voltar
+                        </button>
+                        <button 
+                          onClick={confirmDelete}
+                          disabled={loading}
+                          className="flex-1 py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                        >
+                            {loading && <Loader2 size={16} className="animate-spin" />}
+                            Confirmar
+                        </button>
+                    </div>
+                </motion.div>
+            </div>
+        )}
+      </AnimatePresence>
 
-              {/* Metadata Row */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
-                    <input 
-                        type="date" 
-                        value={formData.dueDate}
-                        onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Prioridade</label>
-                    <select 
-                        value={formData.priority}
-                        onChange={(e) => setFormData({...formData, priority: e.target.value as TaskPriority})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
-                    >
-                        {Object.values(TaskPriority).map(p => <option key={p} value={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags</label>
-                    <input 
-                        type="text" 
-                        value={formData.tags}
-                        onChange={(e) => setFormData({...formData, tags: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none placeholder-gray-500"
-                        placeholder="Ex: Foto, Design..."
-                    />
-                  </div>
-              </div>
-
-              {/* Assignees Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Responsáveis</label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-1">
-                    {users.map(user => {
-                        const isSelected = formData.assigneeIds.includes(user.id);
-                        return (
-                            <div 
-                                key={user.id}
-                                onClick={() => toggleAssignee(user.id)}
-                                className={`flex items-center gap-2 p-2 rounded-lg border cursor-pointer transition-all ${
-                                    isSelected ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : 'bg-white border-gray-200 hover:bg-gray-50'
-                                }`}
-                            >
-                                <div className={`w-4 h-4 rounded border flex items-center justify-center ${isSelected ? 'bg-blue-600 border-blue-600' : 'bg-white border-gray-300'}`}>
-                                    {isSelected && <CheckCircle2 size={12} className="text-white" />}
+      {/* TASK FORM MODAL */}
+      <AnimatePresence>
+        {isModalOpen && (
+            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" 
+                    onClick={() => setIsModalOpen(false)} 
+                />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                    className="bg-white rounded-[3rem] w-full max-w-3xl shadow-[0_64px_128px_-24px_rgba(0,0,0,0.2)] flex flex-col max-h-[90vh] relative z-10 overflow-hidden ring-1 ring-black/5"
+                >
+                    {/* Modal Header */}
+                    <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+                        <div>
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-blue/20">
+                                    {editingId ? <Edit2 size={20} /> : <Plus size={20} strokeWidth={3} />}
                                 </div>
-                                <img src={user.avatar} className="w-6 h-6 rounded-full object-cover" alt="" />
-                                <span className="text-sm text-gray-700 truncate">{user.name}</span>
+                                <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
+                                    {editingId ? 'Editar Detalhes' : 'Nova Atividade'}
+                                </h3>
                             </div>
-                        )
-                    })}
-                </div>
-              </div>
-            </div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-[3.25rem]">Workflow Operacional Pascom</p>
+                        </div>
+                        <button onClick={() => setIsModalOpen(false)} className="p-4 bg-white text-slate-300 hover:text-slate-900 rounded-[1.5rem] shadow-sm border border-slate-100 transition-all active:scale-90">
+                            <X size={24} strokeWidth={3} />
+                        </button>
+                    </div>
+                    
+                    {/* Modal Body */}
+                    <div className="p-6 md:p-12 overflow-y-auto flex-1 space-y-10 hide-scroll">
+                        {/* Title & Status Row */}
+                        <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
+                            <div className="md:col-span-8">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Título da Atividade</label>
+                                <input 
+                                    type="text" 
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({...formData, title: e.target.value})}
+                                    className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-slate-300 font-extrabold text-slate-800 text-lg transition-all"
+                                    placeholder="Ex: Arte Documentário Pascom 2024"
+                                />
+                            </div>
+                            <div className="md:col-span-4">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Status do Fluxo</label>
+                                <div className="relative group">
+                                    <select 
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({...formData, status: e.target.value as TaskStatus})}
+                                        className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-black text-slate-800 uppercase tracking-widest text-[10px] appearance-none cursor-pointer hover:bg-slate-100 transition-all"
+                                    >
+                                        {Object.values(TaskStatus).map(s => <option key={s} value={s}>{s}</option>)}
+                                    </select>
+                                    <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400"><ChevronDown size={14} /></div>
+                                </div>
+                            </div>
+                        </div>
 
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center rounded-b-2xl">
-              <div>
-                 {editingId && (
-                     <button 
-                        onClick={onRequestDelete}
-                        className="text-red-500 hover:bg-red-50 px-3 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-colors"
-                     >
-                        <Trash2 size={16} /> Excluir
-                     </button>
-                 )}
-              </div>
-              <div className="flex gap-3">
-                <button 
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
-                >
-                    Cancelar
-                </button>
-                <button 
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
-                >
-                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                    Salvar
-                </button>
-              </div>
+                        {/* Description */}
+                        <div>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Escopo / Descrição Técnica</label>
+                            <textarea 
+                                value={formData.description}
+                                onChange={(e) => setFormData({...formData, description: e.target.value})}
+                                rows={4}
+                                className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none resize-none placeholder-slate-300 font-medium text-slate-600 leading-relaxed transition-all"
+                                placeholder="Descreva os requisitos, dimensões ou observações importantes..."
+                            />
+                        </div>
+
+                        {/* Metadata Bento Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prazo Final</label>
+                                    <div className="p-2 bg-white rounded-lg text-brand-blue shadow-sm"><CalendarIcon size={14} /></div>
+                                </div>
+                                <input 
+                                    type="date" 
+                                    value={formData.dueDate}
+                                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                                    className="w-full bg-transparent border-none outline-none font-black text-slate-800 text-sm cursor-pointer"
+                                />
+                                <button 
+                                    onClick={() => setFormData({...formData, dueDate: new Date().toISOString().split('T')[0]})}
+                                    className="mt-4 text-[9px] font-black text-brand-blue uppercase tracking-widest flex items-center gap-1 hover:gap-2 transition-all"
+                                >
+                                    Agendar para Hoje <ArrowRight size={10} />
+                                </button>
+                            </div>
+
+                            <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
+                                    <div className="p-2 bg-white rounded-lg text-rose-500 shadow-sm"><AlertCircle size={14} /></div>
+                                </div>
+                                <select 
+                                    value={formData.priority}
+                                    onChange={(e) => setFormData({...formData, priority: e.target.value as TaskPriority})}
+                                    className="w-full bg-transparent border-none outline-none font-black text-slate-800 text-[10px] uppercase tracking-[0.2em] appearance-none cursor-pointer"
+                                >
+                                    {Object.values(TaskPriority).map(p => <option key={p} value={p}>{p}</option>)}
+                                </select>
+                                <div className="mt-4 flex gap-1">
+                                    {[1, 2, 3].map(i => (
+                                        <div key={i} className={`h-1 flex-1 rounded-full ${
+                                            formData.priority === TaskPriority.HIGH ? 'bg-rose-500' :
+                                            formData.priority === TaskPriority.MEDIUM ? (i <= 2 ? 'bg-brand-yellow' : 'bg-slate-200') :
+                                            (i === 1 ? 'bg-brand-green' : 'bg-slate-200')
+                                        }`} />
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
+                                <div className="flex justify-between items-center mb-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tags</label>
+                                    <div className="p-2 bg-white rounded-lg text-slate-400 shadow-sm"><Filter size={14} /></div>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    value={formData.tags}
+                                    onChange={(e) => setFormData({...formData, tags: e.target.value})}
+                                    className="w-full bg-transparent border-none outline-none font-black text-slate-800 text-xs placeholder-slate-300"
+                                    placeholder="Separe por vírgula..."
+                                />
+                                <div className="mt-4 flex flex-wrap gap-1">
+                                    {formData.tags.split(',').filter(t => t.trim()).slice(0, 2).map((t, i) => (
+                                        <span key={i} className="text-[8px] font-black bg-white px-2 py-0.5 rounded-full border border-slate-100 text-slate-400 uppercase tracking-widest">{t.trim()}</span>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Assignees Selection */}
+                        <div className="bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-inner">
+                            <div className="p-6">
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-6 ml-2 italic">Responsáveis Designados</label>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 max-h-64 overflow-y-auto pr-4 custom-scrollbar">
+                                    {users.map(user => {
+                                        const isSelected = formData.assigneeIds.includes(user.id);
+                                        const isCurrentUser = user.id === currentUser.id;
+                                        return (
+                                            <motion.div 
+                                                layout
+                                                key={user.id}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    toggleAssignee(user.id);
+                                                }}
+                                                className={`flex items-center gap-4 p-4 rounded-[1.8rem] border transition-all cursor-pointer group ${
+                                                    isSelected 
+                                                    ? 'bg-brand-blue/5 border-brand-blue/30 shadow-[0_8px_20px_-8px_rgba(59,130,246,0.2)] ring-1 ring-brand-blue/10 scale-[1.02]' 
+                                                    : 'bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50'
+                                                }`}
+                                            >
+                                                <div className={`shrink-0 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${
+                                                    isSelected 
+                                                    ? 'bg-brand-blue border-brand-blue shadow-lg shadow-brand-blue/30' 
+                                                    : 'bg-slate-100 border-slate-200 group-hover:border-slate-300'
+                                                }`}>
+                                                    {isSelected ? <Check size={14} className="text-white" strokeWidth={4} /> : <Circle size={10} className="text-slate-300" />}
+                                                </div>
+                                                <div className="relative shrink-0">
+                                                    <img src={user.avatar} className="w-10 h-10 rounded-2xl object-cover ring-2 ring-white shadow-md group-hover:scale-110 transition-transform" alt="" />
+                                                    {isCurrentUser && (
+                                                        <div className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-brand-green border-4 border-white rounded-full shadow-sm"></div>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col min-w-0">
+                                                    <span className={`text-[11px] font-black truncate leading-none mb-1.5 ${isSelected ? 'text-slate-900' : 'text-slate-600'}`}>
+                                                        {user.name}
+                                                    </span>
+                                                    <span className={`text-[9px] font-black uppercase tracking-widest truncate ${isSelected ? 'text-brand-blue opacity-100' : 'text-slate-400 opacity-60'}`}>
+                                                        {user.role}
+                                                    </span>
+                                                </div>
+                                            </motion.div>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Modal Footer */}
+                    <div className="px-10 py-10 bg-slate-50/50 border-t border-slate-50 flex flex-col sm:flex-row justify-between items-center gap-6">
+                        <div className="w-full sm:w-auto">
+                            {editingId && (
+                                <button 
+                                    onClick={onRequestDelete}
+                                    className="w-full sm:w-auto px-8 py-4 bg-white text-rose-500 border border-rose-100 hover:bg-rose-50 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all active:scale-95 shadow-sm"
+                                >
+                                    <Trash2 size={16} strokeWidth={3} /> Excluir Atividade
+                                </button>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-4 w-full sm:w-auto">
+                            <button 
+                                onClick={() => setIsModalOpen(false)}
+                                className="flex-1 sm:flex-none px-10 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-600 hover:bg-slate-100 rounded-[1.5rem] transition-all active:scale-95"
+                            >
+                                Cancelar
+                            </button>
+                            <button 
+                                onClick={handleSave}
+                                disabled={loading || !formData.title}
+                                className="flex-[2] sm:flex-none px-12 py-5 bg-brand-blue text-white font-black text-xs uppercase tracking-[0.2em] rounded-[1.8rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-blue/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
+                            >
+                                {loading ? <Loader2 size={18} className="animate-spin text-white/50" /> : <Save size={18} strokeWidth={3} />}
+                                {editingId ? 'Sincronizar' : 'Publicar Fluxo'}
+                            </button>
+                        </div>
+                    </div>
+                </motion.div>
             </div>
-          </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };

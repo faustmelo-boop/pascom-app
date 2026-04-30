@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Home, Calendar, CheckSquare, Users, GraduationCap, Bell, Search, Menu, Loader2, LogOut, LayoutGrid, X, Box, Palette, Copy, ChevronRight, ClipboardList, DollarSign } from 'lucide-react';
+import { Home, Calendar, CheckSquare, Users, GraduationCap, Bell, Search, Menu, Loader2, LogOut, LayoutGrid, X, Box, Palette, Copy, ChevronRight, ClipboardList, DollarSign, ShieldCheck } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
 import { Session } from '@supabase/supabase-js';
 import { 
@@ -7,6 +9,7 @@ import {
   InventoryItem, DocumentItem, UserRole, isCoordinator,
   FinancialAccount, FinancialCategory, FinancialProject, FinancialTransaction
 } from './types';
+import * as dataService from './dataService';
 import { Feed } from './components/Feed';
 import { Tasks } from './components/Tasks';
 import { Schedules } from './components/Schedules';
@@ -18,30 +21,80 @@ import { Login } from './components/Login';
 import { NotificationsPanel } from './components/NotificationsPanel';
 import { Registrations } from './components/Registrations';
 import { FinancialPatrimony } from './components/FinancialPatrimony';
+import { Dashboard } from './components/Dashboard';
+import { LoadingScreen } from './components/LoadingScreen';
 
-type Tab = 'feed' | 'escalas' | 'tarefas' | 'ava' | 'agentes' | 'patrimonio' | 'tesouro' | 'perfil';
+type Tab = 'dashboard' | 'escalas' | 'tarefas' | 'ava' | 'agentes' | 'patrimonio' | 'tesouro' | 'perfil';
 
 function App() {
   const [session, setSession] = useState<Session | null>(null);
-  const [activeTab, setActiveTab] = useState<Tab>('feed');
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const queryClient = useQueryClient();
   
-  // Application State
-  const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<User[]>([]);
-  const [posts, setPosts] = useState<Post[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [schedules, setSchedules] = useState<ScheduleEvent[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [documents, setDocuments] = useState<DocumentItem[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [financialAccounts, setFinancialAccounts] = useState<FinancialAccount[]>([]);
-  const [financialCategories, setFinancialCategories] = useState<FinancialCategory[]>([]);
-  const [financialProjects, setFinancialProjects] = useState<FinancialProject[]>([]);
-  const [financialTransactions, setFinancialTransactions] = useState<FinancialTransaction[]>([]);
-  const [notifications, setNotifications] = useState<AppNotification[]>([]);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [avaBreadcrumbs, setAvaBreadcrumbs] = useState<React.ReactNode | null>(null);
+  
+  // Application State managed by React Query
+  const { data: users = [], isLoading: usersLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: dataService.fetchUsers,
+    enabled: !!session,
+  });
+
+  const { data: posts = [], isLoading: postsLoading } = useQuery({
+    queryKey: ['posts'],
+    queryFn: dataService.fetchPosts,
+    enabled: !!session,
+  });
+
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['tasks'],
+    queryFn: dataService.fetchTasks,
+    enabled: !!session,
+  });
+
+  const { data: schedules = [], isLoading: schedulesLoading } = useQuery({
+    queryKey: ['schedules'],
+    queryFn: dataService.fetchSchedules,
+    enabled: !!session,
+  });
+
+  const { data: inventory = [], isLoading: inventoryLoading } = useQuery({
+    queryKey: ['inventory'],
+    queryFn: dataService.fetchInventory,
+    enabled: !!session,
+  });
+
+  const { data: financialData, isLoading: financialLoading } = useQuery({
+    queryKey: ['financial'],
+    queryFn: dataService.fetchFinancialData,
+    enabled: !!session,
+  });
+
+  const currentUser = session ? users.find(u => u.id === session.user.id) || null : null;
+
+  const { data: courses = [], isLoading: coursesLoading } = useQuery({
+    queryKey: ['courses', currentUser?.id],
+    queryFn: () => dataService.fetchTrainingData(currentUser?.id),
+    enabled: !!session && !!users.length,
+  });
+
+  const { data: notifications = [], isLoading: notificationsLoading } = useQuery({
+    queryKey: ['notifications', session?.user.id],
+    queryFn: () => dataService.fetchNotifications(session!.user.id),
+    enabled: !!session,
+  });
+
+  const loading = usersLoading || postsLoading || tasksLoading || schedulesLoading || financialLoading || coursesLoading || inventoryLoading || notificationsLoading;
+
+  const refreshData = useCallback(() => {
+    queryClient.invalidateQueries();
+  }, [queryClient]);
+
+  // Scroll to top on tab change
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeTab]);
 
   // Handle Auth Session
   useEffect(() => {
@@ -53,7 +106,6 @@ function App() {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session) setLoading(false);
     });
 
     return () => subscription.unsubscribe();
@@ -116,150 +168,11 @@ function App() {
     }
   };
 
-  const refreshData = useCallback(async () => {
-    if (!session) return;
-    
-    try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*');
-      if (profilesError) throw profilesError;
-
-      const mappedUsers: User[] = (profilesData || []).map((p: any) => ({
-        id: p.id,
-        name: p.name ? p.name.split(' ').slice(0, 2).join(' ') : 'Sem Nome',
-        role: p.role,
-        avatar: p.avatar,
-        birthday: p.birthday || p.birth_date || p.birthdate || p.data_nascimento || p.nascimento || p.aniversario || '',
-        skills: p.skills || []
-      }));
-
-      setUsers(mappedUsers);
-      const activeUser = mappedUsers.find(u => u.id === session.user.id);
-      setCurrentUser(activeUser || null);
-
-      const { data: postsData, error: postsError } = await supabase
-        .from('posts')
-        .select('*')
-        .order('timestamp', { ascending: false });
-      if (postsError) throw postsError;
-      setPosts((postsData || []).map((p: any) => ({
-        id: p.id,
-        authorId: p.author_id,
-        content: p.content,
-        type: p.type,
-        timestamp: new Date(p.timestamp).toLocaleString('pt-BR'), 
-        likes: p.likes || 0,
-        comments: p.comments || 0,
-        image: p.image,
-        pollOptions: p.poll_options
-      })));
-
-      const { data: tasksData, error: tasksError } = await supabase.from('tasks').select('*');
-      if (tasksError) throw tasksError;
-      setTasks((tasksData || []).map((t: any) => ({
-        id: t.id,
-        title: t.title,
-        description: t.description,
-        assigneeIds: t.assignee_ids || [],
-        dueDate: t.due_date,
-        priority: t.priority,
-        status: t.status,
-        tags: t.tags || []
-      })));
-
-      const { data: schedulesData, error: schedulesError } = await supabase
-        .from('schedules')
-        .select('*')
-        .order('date', { ascending: true });
-      if (schedulesError) throw schedulesError;
-      setSchedules((schedulesData || []).map((s: any) => ({
-        id: s.id,
-        title: s.title,
-        date: s.date,
-        time: s.time,
-        type: s.type,
-        roles: s.roles || [] 
-      })));
-
-      const { data: coursesDataRaw } = await supabase.from('courses').select('*');
-      const { data: lessonsData } = await supabase.from('lessons').select('id, course_id');
-      const { data: userProgressData } = await supabase.from('user_progress').select('lesson_id, user_id');
-      setCourses((coursesDataRaw || []).map((c: any) => {
-        const courseLessons = (lessonsData || []).filter((l: any) => l.course_id === c.id);
-        const completedCount = (userProgressData || []).filter((up: any) => 
-          activeUser && up.user_id === activeUser.id && 
-          courseLessons.some((l: any) => l.id === up.lesson_id)
-        ).length;
-        return {
-          id: c.id,
-          title: c.title,
-          category: c.category,
-          thumbnail: c.cover_image,
-          lessonsCount: courseLessons.length,
-          progress: courseLessons.length > 0 ? Math.round((completedCount / courseLessons.length) * 100) : 0
-        };
-      }));
-
-      const { data: inventoryData } = await supabase.from('inventory').select('*');
-      setInventory((inventoryData || []).map((i: any) => ({
-        id: i.id,
-        name: i.name,
-        description: i.description,
-        condition: i.condition,
-        status: i.status,
-        holderId: i.holder_id,
-        image: i.image
-      })));
-
-      // Financial Data
-      const { data: accountsData } = await supabase.from('financial_accounts').select('*');
-      setFinancialAccounts(accountsData || []);
-
-      const { data: categoriesData } = await supabase.from('financial_categories').select('*');
-      setFinancialCategories(categoriesData || []);
-
-      const { data: projectsData } = await supabase.from('financial_projects').select('*');
-      setFinancialProjects((projectsData || []).map((p: any) => ({
-        id: p.id,
-        name: p.name,
-        description: p.description,
-        budgetPlanned: p.budget_planned || 0,
-        budgetExecuted: p.budget_executed || 0
-      })));
-
-      const { data: transactionsData } = await supabase.from('financial_transactions').select('*').order('date', { ascending: false });
-      setFinancialTransactions((transactionsData || []).map((t: any) => ({
-        id: t.id,
-        type: t.type,
-        value: t.value,
-        date: t.date,
-        categoryId: t.category_id,
-        accountId: t.account_id,
-        toAccountId: t.to_account_id,
-        projectId: t.project_id,
-        paymentMethod: t.payment_method,
-        description: t.description,
-        status: t.status,
-        createdAt: t.created_at
-      })));
-
-      const { data: notifData } = await supabase.from('notifications')
-        .select('*').eq('user_id', session.user.id).order('created_at', { ascending: false }).limit(50);
-      setNotifications((notifData || []).map((n: any) => ({
-        id: n.id,
-        userId: n.user_id,
-        type: n.type,
-        title: n.title,
-        content: n.content,
-        isRead: n.is_read,
-        createdAt: n.created_at,
-        relatedId: n.related_id
-      })));
-    } catch (error) {
-      console.error('Error fetching data:', error);
-    }
-  }, [session]);
+  const financialAccounts = financialData?.accounts || [];
+  const financialCategories = financialData?.categories || [];
+  const financialProjects = financialData?.projects || [];
+  const financialTransactions = financialData?.transactions || [];
+  const documents: DocumentItem[] = []; // Placeholder
 
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -284,36 +197,44 @@ function App() {
     const channel = supabase.channel('app-realtime-sync')
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${session.user.id}` }, (p) => {
          const newNotif: AppNotification = { id: p.new.id, userId: p.new.user_id, type: p.new.type, title: p.new.title, content: p.new.content, isRead: p.new.is_read, createdAt: p.new.created_at, relatedId: p.new.related_id };
-         setNotifications(prev => [newNotif, ...prev]);
+         queryClient.setQueryData(['notifications', session.user.id], (prev: any) => [newNotif, ...(prev || [])]);
          playNotificationSound();
          sendSystemNotification(newNotif.title, newNotif.content);
       })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => refreshData())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => refreshData())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => queryClient.invalidateQueries({ queryKey: ['tasks'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'schedules' }, () => queryClient.invalidateQueries({ queryKey: ['schedules'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, () => queryClient.invalidateQueries({ queryKey: ['posts'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'inventory' }, () => queryClient.invalidateQueries({ queryKey: ['inventory'] }))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => queryClient.invalidateQueries({ queryKey: ['users'] }))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [session?.user?.id, refreshData]);
+  }, [session?.user?.id, queryClient]);
 
-  useEffect(() => { if (session) refreshData().finally(() => setLoading(false)); }, [session, refreshData]);
+  useEffect(() => { 
+    if (session) {
+      // Session is valid
+    } 
+  }, [session]);
 
-  const handleLogout = async () => { await supabase.auth.signOut(); setSession(null); setUsers([]); setCurrentUser(null); };
+  const handleLogout = async () => { 
+    await supabase.auth.signOut(); 
+    setSession(null); 
+    queryClient.clear();
+  };
 
   const handleMarkAsRead = async (id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
     await supabase.from('notifications').update({ is_read: true }).eq('id', id);
+    queryClient.setQueryData(['notifications', session?.user.id], (prev: any) => prev?.map((n: any) => n.id === id ? { ...n, isRead: true } : n));
   };
 
   const handleMarkAllAsRead = async () => {
-    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     await supabase.from('notifications').update({ is_read: true }).eq('user_id', session?.user.id);
+    queryClient.setQueryData(['notifications', session?.user.id], (prev: any) => prev?.map((n: any) => ({ ...n, isRead: true })));
   };
 
   const handleClearAll = async () => {
-    setNotifications([]);
     await supabase.from('notifications').delete().eq('user_id', session?.user.id);
+    queryClient.setQueryData(['notifications', session?.user.id], []);
   };
 
   if (!session) return <Login />;
@@ -322,27 +243,41 @@ function App() {
   const isUserCoordinator = currentUser && isCoordinator(currentUser.role);
 
   const renderContent = () => {
-    if (loading) return (
-      <div className="flex flex-col items-center justify-center h-full text-slate-400">
-        <Loader2 size={40} className="animate-spin mb-4 text-blue-600" />
-        <p className="font-medium animate-pulse">Sincronizando Pascom...</p>
-      </div>
-    );
     if (!currentUser) return (
       <div className="flex flex-col items-center justify-center h-full px-4 text-center">
          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 flex flex-col items-center">
              <Users size={48} className="text-slate-300 mb-4" />
              <h3 className="text-xl font-bold text-slate-700">Perfil não encontrado</h3>
-             <button onClick={handleLogout} className="mt-6 text-blue-600 font-semibold hover:underline">Sair</button>
+             <button onClick={handleLogout} className="mt-6 text-brand-blue font-semibold hover:underline">Sair</button>
          </div>
       </div>
     );
 
     switch (activeTab) {
-      case 'feed': return <Feed posts={posts} users={users} currentUser={currentUser} onRefresh={refreshData} />;
-      case 'tarefas': return <Tasks tasks={tasks} users={users} currentUser={currentUser} onRefresh={refreshData} />;
+      case 'dashboard': return (
+        <Dashboard 
+          currentUser={currentUser}
+          users={users}
+          posts={posts}
+          tasks={tasks}
+          schedules={schedules}
+          transactions={financialTransactions}
+          inventory={inventory}
+          courses={courses}
+          setActiveTab={setActiveTab}
+          onRefresh={refreshData}
+        />
+      );
+      case 'tarefas': return <Tasks tasks={tasks} users={users} currentUser={currentUser} onRefresh={() => queryClient.invalidateQueries({ queryKey: ['tasks'] })} />;
       case 'escalas': return <Schedules schedules={schedules} users={users} currentUser={currentUser} onRefresh={refreshData} />;
-      case 'ava': return <Ava courses={courses} documents={documents} currentUser={currentUser} users={users} onRefresh={refreshData} />;
+      case 'ava': return <Ava 
+        courses={courses} 
+        documents={documents} 
+        currentUser={currentUser} 
+        users={users} 
+        onRefresh={refreshData} 
+        onBreadcrumbChange={setAvaBreadcrumbs}
+      />;
       case 'agentes': return <Agents users={users} currentUser={currentUser} onRefresh={refreshData} />;
       case 'patrimonio': return <Inventory items={inventory} users={users} currentUser={currentUser} onRefresh={refreshData} />;
       case 'tesouro': return (
@@ -352,100 +287,151 @@ function App() {
           projects={financialProjects}
           transactions={financialTransactions}
           currentUser={currentUser}
-          onRefresh={refreshData}
+          onRefresh={() => queryClient.invalidateQueries({ queryKey: ['financial'] })}
         />
       );
-      case 'perfil': return <Profile user={currentUser} email={session.user.email} tasks={tasks} schedules={schedules} posts={posts} onUpdate={refreshData} />;
-      default: return <Feed posts={posts} users={users} currentUser={currentUser} onRefresh={refreshData} />;
+      case 'perfil': return <Profile user={currentUser} email={session.user.email} tasks={tasks} schedules={schedules} posts={posts} onUpdate={refreshData} onLogout={handleLogout} />;
+      default: return <Feed posts={posts} users={users} currentUser={currentUser} onRefresh={() => queryClient.invalidateQueries({ queryKey: ['posts'] })} />;
     }
   };
 
-  const NavItem = ({ tab, icon: Icon, label }: { tab: Tab; icon: React.ElementType; label: string }) => {
+  const MobileNavItem = ({ tab, icon: Icon, label }: { tab: Tab; icon: React.ElementType; label: string }) => {
     const isActive = activeTab === tab;
     return (
       <button
-        onClick={() => { setActiveTab(tab); setMobileMenuOpen(false); }}
-        className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all w-full text-left group ${isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+        onClick={() => setActiveTab(tab)}
+        className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
+            isActive ? 'text-white' : 'text-white/50'
+        }`}
       >
-        <Icon size={20} className={isActive ? 'text-white' : 'text-slate-400 group-hover:text-slate-600'} />
-        <span className="font-medium text-sm">{label}</span>
+        <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-white/10 text-brand-green' : ''}`}>
+            <Icon size={20} fill={isActive ? 'currentColor' : 'none'} fillOpacity={0.2} />
+        </div>
+        <span className="text-[9px] font-black uppercase tracking-tighter">{label}</span>
+      </button>
+    );
+};
+
+  const DesktopNavItem = ({ tab, icon: Icon, label }: { tab: Tab; icon: React.ElementType; label: string }) => {
+    const isActive = activeTab === tab;
+    return (
+      <button
+        onClick={() => setActiveTab(tab)}
+        className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all relative group h-10 ${
+            isActive 
+                ? 'text-brand-blue font-black' 
+                : 'text-slate-400 font-bold hover:text-slate-600 hover:bg-slate-50'
+        }`}
+      >
+        <Icon size={18} className={`transition-all ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} strokeWidth={isActive ? 3 : 2} />
+        <span className="text-[11px] uppercase tracking-widest">{label}</span>
+        {isActive && (
+          <motion.div 
+            layoutId="activeTab"
+            className="absolute -bottom-1 left-4 right-4 h-1 bg-brand-blue rounded-full shadow-[0_4px_12px_rgba(59,130,246,0.3)]"
+          />
+        )}
       </button>
     );
   };
 
   return (
-    <div className="h-screen w-full bg-slate-50 flex overflow-hidden relative font-sans text-slate-900">
-      {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-white shadow-2xl flex flex-col border-r border-slate-100">
-            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-               <img src="https://i.imgur.com/ofoiwCd.png" alt="Logo" className="h-10 w-auto" />
-               <button onClick={() => setMobileMenuOpen(false)} className="text-slate-400 p-1"><X size={20} /></button>
-            </div>
-            <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-              <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Principal</p>
-              <NavItem tab="feed" icon={LayoutGrid} label="Mural" />
-              <NavItem tab="escalas" icon={Calendar} label="Escalas" />
-              <NavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
-              <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-6">Gestão</p>
-              <NavItem tab="ava" icon={GraduationCap} label="Formação" />
-              <NavItem tab="agentes" icon={Users} label="Agentes" />
-              <NavItem tab="patrimonio" icon={Box} label="Patrimônio" />
-              {(isUserCoordinator || (currentUser && currentUser.role === UserRole.TREASURER)) && (
-                <NavItem tab="tesouro" icon={DollarSign} label="Tesouro" />
-              )}
-            </nav>
-          </aside>
-        </div>
-      )}
-
-      <aside className="hidden md:flex flex-col w-72 bg-white border-r border-slate-200 h-full shrink-0 z-40">
-        <div className="p-8 pb-4">
-          <img src="https://i.imgur.com/ofoiwCd.png" alt="Logo" className="h-12 w-auto" />
-        </div>
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Principal</p>
-          <NavItem tab="feed" icon={LayoutGrid} label="Mural" />
-          <NavItem tab="escalas" icon={Calendar} label="Escalas" />
-          <NavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
-          <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 mt-8">Gestão</p>
-          <NavItem tab="ava" icon={GraduationCap} label="Formação" />
-          <NavItem tab="agentes" icon={Users} label="Agentes" />
-          <NavItem tab="patrimonio" icon={Box} label="Patrimônio" />
-          {(isUserCoordinator || (currentUser && currentUser.role === UserRole.TREASURER)) && (
-            <NavItem tab="tesouro" icon={DollarSign} label="Tesouro" />
-          )}
-        </nav>
-        {currentUser && (
-          <div className="p-4 border-t border-slate-100 bg-slate-50/30">
-             <div className="rounded-xl p-3 flex items-center gap-3 mb-2 cursor-pointer hover:bg-white transition-all" onClick={() => setActiveTab('perfil')}>
-                <img src={currentUser.avatar} alt="Me" className="w-10 h-10 rounded-full object-cover shadow-sm" />
-                <div className="flex-1 overflow-hidden">
-                    <p className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</p>
-                    <p className="text-xs text-blue-600 truncate font-medium">{currentUser.role}</p>
-                </div>
-             </div>
-             <button onClick={handleLogout} className="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-red-600 py-2 rounded-lg text-sm font-medium transition-colors"><LogOut size={16} /> Sair</button>
-          </div>
-        )}
-      </aside>
-
-      <main className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden bg-slate-50">
+    <div className="h-screen w-full bg-[#f8fafc] flex flex-col overflow-hidden relative font-sans text-slate-900">
+      <main className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         <NotificationsPanel notifications={notifications} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} onMarkAsRead={handleMarkAsRead} onMarkAllAsRead={handleMarkAllAsRead} onClearAll={handleClearAll} onRequestSystemPermissions={requestSystemNotificationPermission} />
-        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 p-4 shrink-0 flex justify-between items-center z-30 sticky top-0">
-           <button onClick={() => setMobileMenuOpen(true)} className="text-slate-700 p-2"><Menu size={24} /></button>
-           <img src="https://i.imgur.com/ofoiwCd.png" alt="Pascom" className="h-8 w-auto" />
-           <button onClick={() => setNotificationsOpen(true)} className="relative p-2"><Bell size={22} /> {notifications.filter(n => !n.isRead).length > 0 && <span className="absolute top-1.5 right-2 w-2 h-2 bg-red-500 rounded-full"></span>}</button>
-        </header>
-        <header className="hidden md:flex justify-between items-center px-8 py-5 shrink-0 bg-slate-50/90 backdrop-blur-sm z-30 sticky top-0">
-           <div className="flex-1 max-w-lg relative">
-               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-               <input type="text" placeholder="Pesquisar..." className="w-full bg-white border border-slate-200 rounded-xl py-2.5 pl-10 pr-4 shadow-sm outline-none transition-all" />
+        
+        {/* Mobile Header */}
+        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 shrink-0 flex justify-between items-center z-50 sticky top-0">
+           <div className="flex items-center gap-2">
+              <img src="https://i.imgur.com/ofoiwCd.png" alt="Pascom Tasks" className="h-8 w-auto" />
            </div>
-           <button onClick={() => setNotificationsOpen(true)} className="relative p-2.5 rounded-full bg-white border border-slate-200 ml-4"><Bell size={20} /> {notifications.filter(n => !n.isRead).length > 0 && <span className="absolute top-2 right-2.5 w-2 h-2 bg-red-500 rounded-full"></span>}</button>
+           <div className="flex items-center gap-3">
+              <button 
+                onClick={() => setActiveTab(prev => prev === 'perfil' ? 'dashboard' : 'perfil')}
+                className={`w-10 h-10 rounded-xl overflow-hidden border-2 shadow-sm transition-all ${
+                  activeTab === 'perfil' ? 'border-brand-blue scale-95' : 'border-white'
+                }`}
+              >
+                 {currentUser && <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover" />}
+              </button>
+              <button onClick={() => setNotificationsOpen(true)} className="relative bg-slate-100 p-2.5 rounded-xl transition-all active:scale-95"><Bell size={22} /> {notifications.filter(n => !n.isRead).length > 0 && <span className="absolute top-1.5 right-2 w-2 h-2 bg-brand-yellow rounded-full"></span>}</button>
+           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-0 md:px-2 hide-scroll">{renderContent()}</div>
+ 
+        {/* Modern Desktop Navbar Integrated Header */}
+        <header className="hidden md:flex justify-between items-center px-10 h-20 shrink-0 z-50 sticky top-0 bg-white/80 backdrop-blur-xl border-b border-slate-200/50 shadow-[0_1px_5px_-1px_rgba(0,0,0,0.02)]">
+           {/* Left: Brand + Breadcrumbs (Contextual) */}
+           <div className="w-[30%] flex items-center gap-6">
+              <button onClick={() => setActiveTab('dashboard')} className="shrink-0 hover:scale-105 transition-transform active:scale-95">
+                <img src="https://i.imgur.com/ofoiwCd.png" alt="Pascom Tasks" className="h-10 w-auto" />
+              </button>
+              
+              <div className="w-px h-6 bg-slate-200 hidden xl:block" />
+              
+              <div className="hidden xl:flex items-center min-w-0">
+                {activeTab === 'ava' && avaBreadcrumbs && (
+                  <div className="animate-in fade-in slide-in-from-left-4 duration-500 whitespace-nowrap overflow-hidden">
+                    {avaBreadcrumbs}
+                  </div>
+                )}
+              </div>
+           </div>
+
+           {/* Center: Main Navigation */}
+           <nav className="flex items-center gap-2 bg-slate-100/50 p-1.5 rounded-2xl border border-slate-200/40 shadow-inner">
+              <DesktopNavItem tab="dashboard" icon={Home} label="Início" />
+              <DesktopNavItem tab="escalas" icon={Calendar} label="Escalas" />
+              <DesktopNavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
+              <DesktopNavItem tab="ava" icon={GraduationCap} label="AVA" />
+              <DesktopNavItem tab="agentes" icon={Users} label="Agentes" />
+           </nav>
+
+           {/* Right: Notifications + Identity */}
+           <div className="w-[30%] flex items-center justify-end gap-5">
+              <button onClick={() => setNotificationsOpen(true)} className="relative p-3 rounded-2xl bg-white border border-slate-100 shadow-sm text-slate-600 hover:text-brand-blue transition-all hover:shadow-md hover:border-brand-blue/20 group">
+                <Bell size={20} className="group-hover:rotate-12 transition-transform" /> 
+                {notifications.filter(n => !n.isRead).length > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-brand-blue text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-lg animate-in zoom-in">
+                        {notifications.filter(n => !n.isRead).length}
+                    </span>
+                )}
+              </button>
+
+              <div className="w-px h-8 bg-slate-200" />
+              
+              {currentUser && (
+                <div className="flex items-center gap-4 bg-slate-900 shadow-xl shadow-slate-900/10 p-1.5 pr-5 rounded-[1.8rem] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer" onClick={() => setActiveTab('perfil')}>
+                   <div className="relative">
+                      <img src={currentUser.avatar} alt="Me" className="w-9 h-9 rounded-2xl object-cover shadow-sm border-2 border-white/20" />
+                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-brand-green border-2 border-slate-900 rounded-full shadow-sm" />
+                   </div>
+                   <div className="hidden lg:block text-left">
+                      <p className="text-[11px] font-black text-white truncate tracking-tight leading-none mb-1">{currentUser.name.split(' ')[0]}</p>
+                      <p className="text-[8px] uppercase font-bold text-slate-400 tracking-wider">
+                          {currentUser.role}
+                      </p>
+                   </div>
+                </div>
+              )}
+           </div>
+        </header>
+
+        <div className={`flex-1 overflow-y-auto pt-4 pb-24 md:pb-12 hide-scroll transition-all duration-700 ${loading ? 'blur-xl grayscale opacity-50 scale-[0.98]' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}>
+          <div className="max-w-7xl mx-auto md:px-6">
+            {renderContent()}
+          </div>
+        </div>
+
+        {loading && <LoadingScreen />}
+
+        {/* Floating Bottom Nav for Mobile */}
+        <nav className="md:hidden fixed bottom-6 left-6 right-6 z-50 bg-brand-blue/90 backdrop-blur-xl rounded-3xl p-2 px-1 shadow-2xl flex items-center justify-around border border-white/10">
+          <MobileNavItem tab="dashboard" icon={Home} label="Início" />
+          <MobileNavItem tab="escalas" icon={Calendar} label="Escalas" />
+          <MobileNavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
+          <MobileNavItem tab="ava" icon={GraduationCap} label="AVA" />
+          <MobileNavItem tab="agentes" icon={Users} label="Agentes" />
+        </nav>
       </main>
     </div>
   );

@@ -86,105 +86,111 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
   }
 
   return (
-    <div className="max-w-6xl mx-auto p-4 pb-24 lg:pb-8 animate-fade-in">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+      {/* Header */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 py-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
-            <Database className="text-blue-600" size={24} /> Cadastros Externos
-          </h2>
-          <p className="text-sm text-slate-500 font-medium">Repositório de informações da tabela kv_store_dd37b18a</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Cadastros Externos</h1>
+          <p className="text-slate-500 font-medium text-lg italic">Repositório de informações da base de dados kv_store</p>
         </div>
         
-        <div className="flex items-center gap-3">
-          <div className="relative w-full sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+        <div className="flex items-center gap-4">
+          <div className="relative group min-w-[280px]">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-blue transition-colors" size={20} />
             <input 
               type="text" 
               placeholder="Pesquisar registros..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="px-4 py-2 pl-10 bg-white border border-slate-300 rounded-xl w-full focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none text-sm shadow-sm"
+              className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-900 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-slate-400 font-medium transition-all shadow-sm"
             />
           </div>
           <button 
             onClick={fetchRegistrations}
-            className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-600 shadow-sm transition-all active:scale-95"
+            className="p-3.5 bg-white border border-slate-100 rounded-2xl hover:bg-slate-50 text-slate-600 shadow-xl shadow-slate-100/50 transition-all active:scale-95 group"
             title="Atualizar"
           >
-            <Loader2 size={20} className={loading ? "animate-spin" : ""} />
+            <Loader2 size={24} className={`${loading ? "animate-spin text-brand-blue" : "group-hover:rotate-180 transition-transform duration-500"}`} />
           </button>
         </div>
-      </div>
+      </header>
 
       {loading && data.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border border-slate-100 shadow-sm">
-          <Loader2 size={40} className="animate-spin text-blue-600 mb-4" />
-          <p className="text-slate-500 animate-pulse font-medium">Consultando banco de dados...</p>
+        <div className="flex flex-col items-center justify-center h-80 bg-white rounded-[3rem] border border-slate-100 shadow-sm animate-in zoom-in-95">
+          <div className="relative mb-6">
+            <div className="w-16 h-16 bg-brand-blue/10 rounded-2xl animate-spin duration-[3s]"></div>
+            <Loader2 size={32} className="absolute inset-0 m-auto animate-spin text-brand-blue" />
+          </div>
+          <p className="text-slate-500 font-extrabold uppercase tracking-widest text-xs animate-pulse">Sincronizando registros...</p>
         </div>
       ) : filteredData.length === 0 ? (
-        <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-slate-300">
-          <ClipboardList className="mx-auto text-slate-200 mb-4" size={64} />
-          <h3 className="text-lg font-medium text-slate-700">Nenhum registro encontrado</h3>
-          <p className="text-slate-500 text-sm mt-1">Os dados da tabela kv_store aparecerão aqui.</p>
+        <div className="flex flex-col items-center justify-center p-20 bg-slate-50/50 rounded-[3.5rem] border-2 border-dashed border-slate-200 text-center animate-in zoom-in-95">
+          <div className="p-6 bg-white rounded-3xl shadow-sm mb-6 text-slate-200">
+            <ClipboardList size={64} strokeWidth={1} />
+          </div>
+          <h3 className="text-xl font-extrabold text-slate-900 tracking-tight">Nenhum registro encontrado</h3>
+          <p className="text-slate-500 font-medium mt-2">Os dados da tabela kv_store aparecerão aqui assim que disponíveis.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-[3rem] shadow-xl shadow-slate-100/50 border border-slate-100 overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-slate-50/50 border-b border-slate-200">
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identificador (Key)</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nome / Identificação</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Contato</th>
-                  <th className="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                <tr className="bg-slate-50/50 border-b border-slate-100">
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Key</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Identificação</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contato</th>
+                  <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-50">
                 {filteredData.map((item) => (
-                  <tr key={item.id} className="hover:bg-blue-50/20 transition-colors group">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-xs font-mono text-slate-400 bg-slate-50 px-2 py-1 rounded border border-slate-100">
+                  <tr key={item.id} className="hover:bg-brand-blue/5 transition-all group">
+                    <td className="px-8 py-6 whitespace-nowrap">
+                      <span className="text-[10px] font-black font-mono text-slate-400 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
                         {item.id.slice(0, 8)}...
                       </span>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="font-bold text-slate-900">
+                    <td className="px-8 py-6">
+                      <div className="font-extrabold text-slate-800 text-base leading-tight">
                         {item.nome || item.name || item.Nome || item.titulo || "Sem Nome"}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate max-w-[180px] mt-0.5">
-                        {item.assunto || item.observacao || item.data || ""}
+                      <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mt-1 opacity-60">
+                        {item.assunto || item.observacao || item.data || "Nenhuma observação"}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
+                    <td className="px-8 py-6">
+                      <div className="flex flex-col gap-1.5">
                         {item.email && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <Mail size={12} className="text-slate-400" /> {item.email}
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                            <div className="p-1 bg-slate-100 rounded-md"><Mail size={12} className="text-slate-400" /></div>
+                            {item.email}
                           </div>
                         )}
                         {(item.whatsapp || item.telefone || item.celular) && (
-                          <div className="flex items-center gap-1.5 text-xs text-slate-600">
-                            <Phone size={12} className="text-slate-400" /> {item.whatsapp || item.telefone || item.celular}
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                            <div className="p-1 bg-slate-100 rounded-md"><Phone size={12} className="text-slate-400" /></div>
+                            {item.whatsapp || item.telefone || item.celular}
                           </div>
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="px-8 py-6 text-right">
+                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
                         <button 
                           onClick={() => setSelectedItem(item)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Ver todos os campos"
+                          className="p-3 bg-white border border-slate-100 shadow-sm text-brand-blue hover:bg-brand-blue hover:text-white rounded-2xl transition-all active:scale-90"
+                          title="Ver Detalhes"
                         >
-                          <Eye size={18} />
+                          <Eye size={20} />
                         </button>
                         <button 
                           onClick={() => handleDelete(item.id)}
                           disabled={deletingId === item.id}
-                          className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                          className="p-3 bg-white border border-slate-100 shadow-sm text-rose-500 hover:bg-rose-500 hover:text-white rounded-2xl transition-all active:scale-90"
                           title="Excluir"
                         >
-                          {deletingId === item.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                          {deletingId === item.id ? <Loader2 size={20} className="animate-spin" /> : <Trash2 size={20} />}
                         </button>
                       </div>
                     </td>
@@ -196,41 +202,41 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* MODAL DE DETALHES (Exibe todo o JSONB) */}
+      {/* MODAL DE DETALHES (Bento Style) */}
       {selectedItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20">
-            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
-                  <Database size={20} />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20 animate-in zoom-in-95 duration-500">
+            <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
+              <div className="flex items-center gap-5">
+                <div className="p-4 bg-brand-blue text-white rounded-3xl shadow-xl shadow-brand-blue/10 ring-4 ring-brand-blue/5">
+                  <Database size={24} />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-lg">Detalhes do Registro</h3>
-                  <p className="text-[10px] font-mono text-slate-400 uppercase tracking-tighter">Key: {selectedItem.id}</p>
+                  <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none mb-1">Ficha de Registro</h3>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {selectedItem.id}</p>
                 </div>
               </div>
               <button 
                 onClick={() => setSelectedItem(null)} 
-                className="text-slate-400 hover:text-slate-600 bg-white p-2 rounded-full shadow-sm border border-slate-100 transition-all hover:rotate-90"
+                className="p-3 text-slate-400 hover:text-slate-600 bg-white rounded-2xl shadow-sm border border-slate-100 transition-all hover:rotate-90 active:scale-90"
               >
-                <X size={20} />
+                <X size={24} />
               </button>
             </div>
             
-            <div className="p-6 overflow-y-auto space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-10 overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {Object.entries(selectedItem).map(([key, value]) => {
                   if (key.startsWith('_') || key === 'id') return null;
                   
                   return (
-                    <div key={key} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 transition-hover hover:border-blue-100 group">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mb-1 group-hover:text-blue-500 transition-colors">
+                    <div key={key} className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:border-brand-blue/20 group">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 group-hover:text-brand-blue transition-colors">
                         {key.replace(/_/g, ' ')}
                       </span>
-                      <div className="text-sm text-slate-800 break-words font-semibold">
+                      <div className="text-base text-slate-800 break-words font-extrabold leading-tight">
                         {typeof value === 'object' ? (
-                          <pre className="text-[10px] bg-white p-2 rounded mt-1 overflow-x-auto border border-slate-100">
+                          <pre className="text-[11px] bg-slate-900 text-slate-300 p-4 rounded-2xl mt-2 overflow-x-auto border-2 border-slate-800 font-mono shadow-inner">
                             {JSON.stringify(value, null, 2)}
                           </pre>
                         ) : (
@@ -243,18 +249,18 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
               </div>
             </div>
 
-            <div className="p-4 bg-slate-50/50 border-t border-slate-100 flex gap-3">
+            <div className="p-8 bg-slate-50/50 border-t border-slate-50 flex gap-4">
               <button 
                 onClick={() => handleDelete(selectedItem.id)}
-                className="px-5 py-2.5 text-red-600 hover:bg-red-50 rounded-xl text-sm font-bold transition-all flex items-center gap-2"
+                className="flex-1 py-4 px-6 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-[1.5rem] text-xs transition-all flex items-center justify-center gap-2"
               >
-                <Trash2 size={16} /> Excluir Registro
+                <Trash2 size={18} /> Apagar Registro
               </button>
               <button 
                 onClick={() => setSelectedItem(null)}
-                className="ml-auto px-8 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-lg shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
+                className="flex-1 py-4 px-8 bg-slate-900 text-white rounded-[1.5rem] text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
               >
-                Fechar
+                Fechar Visualização
               </button>
             </div>
           </div>

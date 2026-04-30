@@ -457,7 +457,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
 
   const getStatusIcon = (status: FinancialTransactionStatus) => {
     switch (status) {
-      case FinancialTransactionStatus.PAID: return <CheckCircle2 size={16} className="text-emerald-500" />;
+      case FinancialTransactionStatus.PAID: return <CheckCircle2 size={16} className="text-brand-green" />;
       case FinancialTransactionStatus.CANCELLED: return <XCircle size={16} className="text-red-500" />;
       case FinancialTransactionStatus.PLANNED: return <Clock size={16} className="text-amber-500" />;
       case FinancialTransactionStatus.PENDING_APPROVAL: return <AlertTriangle size={16} className="text-orange-500" />;
@@ -579,9 +579,9 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
 
   const getTransactionTypeColor = (type: FinancialTransactionType) => {
     switch (type) {
-      case FinancialTransactionType.INCOME: return 'text-emerald-600 bg-emerald-50';
+      case FinancialTransactionType.INCOME: return 'text-brand-green bg-brand-green/5';
       case FinancialTransactionType.EXPENSE: return 'text-red-600 bg-red-50';
-      case FinancialTransactionType.TRANSFER: return 'text-blue-600 bg-blue-50';
+      case FinancialTransactionType.TRANSFER: return 'text-brand-blue bg-brand-blue/5';
     }
   };
 
@@ -598,7 +598,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
             {canAdd && (
               <button 
                 onClick={() => setIsAddingTransaction(true)}
-                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-md shadow-blue-200"
+                className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2.5 rounded-xl font-semibold transition-all shadow-md shadow-brand-blue/10 hover:opacity-90"
               >
                 <Plus size={18} />
                 Novo Lançamento
@@ -628,7 +628,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               onClick={() => setActiveSubTab(tab.id as any)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${
                 activeSubTab === tab.id 
-                  ? 'bg-slate-900 text-white shadow-sm' 
+                  ? 'bg-brand-blue text-white shadow-sm' 
                   : 'text-slate-500 hover:bg-slate-100 hover:text-slate-900'
               }`}
             >
@@ -646,7 +646,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
+                  <div className="p-2 bg-brand-blue/10 text-brand-blue rounded-lg">
                     <Wallet size={20} />
                   </div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Total</span>
@@ -657,12 +657,12 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
-                  <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
+                  <div className="p-2 bg-brand-green/10 text-brand-green rounded-lg">
                     <TrendingUp size={20} />
                   </div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entradas (Mês)</span>
                 </div>
-                <h3 className="text-2xl font-bold text-emerald-600">{formatCurrency(monthlyIncome)}</h3>
+                <h3 className="text-2xl font-bold text-brand-green">{formatCurrency(monthlyIncome)}</h3>
                 <p className="text-slate-500 text-xs mt-1">Receitas confirmadas no mês</p>
               </div>
 
@@ -684,7 +684,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   </div>
                   <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resultado</span>
                 </div>
-                <h3 className={`text-2xl font-bold ${monthlyResult >= 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                <h3 className={`text-2xl font-bold ${monthlyResult >= 0 ? 'text-brand-green' : 'text-red-600'}`}>
                   {formatCurrency(monthlyResult)}
                 </h3>
                 <p className="text-slate-500 text-xs mt-1">{monthlyResult >= 0 ? 'Superávit mensal' : 'Déficit mensal'}</p>
@@ -696,7 +696,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               <div className="lg:col-span-1 space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-slate-900">Saldos por Conta</h2>
-                  <button onClick={() => setActiveSubTab('contas')} className="text-blue-600 text-xs font-bold hover:underline">Ver todas</button>
+                  <button onClick={() => setActiveSubTab('contas')} className="text-brand-blue text-xs font-bold hover:underline">Ver todas</button>
                 </div>
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                   {accounts.map((account) => (
@@ -725,7 +725,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               <div className="lg:col-span-2 space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-lg font-bold text-slate-900">Orçamentos de Projetos</h2>
-                  <button onClick={() => setActiveSubTab('projetos')} className="text-blue-600 text-xs font-bold hover:underline">Ver todos</button>
+                  <button onClick={() => setActiveSubTab('projetos')} className="text-brand-blue text-xs font-bold hover:underline">Ver todos</button>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {projects.map((project) => {
@@ -748,7 +748,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                         
                         <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-2">
                           <div 
-                            className={`h-full rounded-full transition-all ${isOverBudget ? 'bg-red-500' : isNearLimit ? 'bg-amber-500' : 'bg-blue-600'}`}
+                            className={`h-full rounded-full transition-all ${isOverBudget ? 'bg-red-500' : isNearLimit ? 'bg-brand-yellow' : 'bg-brand-blue'}`}
                             style={{ width: `${Math.min(percentage, 100)}%` }}
                           />
                         </div>
@@ -775,7 +775,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-bold text-slate-900">Últimos Lançamentos</h2>
-                <button onClick={() => setActiveSubTab('transacoes')} className="text-blue-600 text-xs font-bold hover:underline">Ver extrato completo</button>
+                <button onClick={() => setActiveSubTab('transacoes')} className="text-brand-blue text-xs font-bold hover:underline">Ver extrato completo</button>
               </div>
               <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
                 <table className="w-full text-left border-collapse">
@@ -809,7 +809,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-600">{account?.name}</td>
                           <td className="px-6 py-4">
-                            <span className={`text-sm font-bold ${t.type === FinancialTransactionType.INCOME ? 'text-emerald-600' : t.type === FinancialTransactionType.EXPENSE ? 'text-red-600' : 'text-blue-600'}`}>
+                            <span className={`text-sm font-bold ${t.type === FinancialTransactionType.INCOME ? 'text-brand-green' : t.type === FinancialTransactionType.EXPENSE ? 'text-red-600' : 'text-brand-blue'}`}>
                               {t.type === FinancialTransactionType.EXPENSE ? '-' : ''}{formatCurrency(t.value)}
                             </span>
                           </td>
@@ -844,7 +844,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <select 
                   value={filterProject} 
                   onChange={(e) => setFilterProject(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-blue/10"
                 >
                   <option value="all">Todos os Projetos</option>
                   {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -855,7 +855,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <select 
                   value={filterAccount} 
                   onChange={(e) => setFilterAccount(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-blue/10"
                 >
                   <option value="all">Todas as Contas</option>
                   {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -866,7 +866,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <select 
                   value={filterCategory} 
                   onChange={(e) => setFilterCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-brand-blue/10"
                 >
                   <option value="all">Todas as Categorias</option>
                   {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -923,7 +923,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                         </td>
                         <td className="px-6 py-4 text-sm text-slate-600">{account?.name}</td>
                         <td className="px-6 py-4">
-                          <span className={`text-sm font-bold ${t.type === FinancialTransactionType.INCOME ? 'text-emerald-600' : t.type === FinancialTransactionType.EXPENSE ? 'text-red-600' : 'text-blue-600'}`}>
+                          <span className={`text-sm font-bold ${t.type === FinancialTransactionType.INCOME ? 'text-brand-green' : t.type === FinancialTransactionType.EXPENSE ? 'text-red-600' : 'text-brand-blue'}`}>
                             {t.type === FinancialTransactionType.EXPENSE ? '-' : ''}{formatCurrency(t.value)}
                           </span>
                         </td>
@@ -948,7 +948,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                               <>
                                 <button 
                                   onClick={() => handleEditTransaction(t)}
-                                  className="p-1.5 text-slate-400 hover:text-blue-600 transition-all"
+                                  className="p-1.5 text-slate-400 hover:text-brand-blue transition-all"
                                 >
                                   <Edit2 size={16} />
                                 </button>
@@ -985,7 +985,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               {canEdit && (
                 <button 
                   onClick={() => setIsAddingAccount(true)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
                 >
                   <Plus size={16} /> Nova Conta
                 </button>
@@ -1005,12 +1005,12 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   </div>
                   <h3 className="font-bold text-slate-900 mb-4">{account.name}</h3>
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                    <button className="text-xs font-bold text-blue-600 hover:underline">Ver extrato</button>
+                    <button className="text-xs font-bold text-brand-blue hover:underline">Ver extrato</button>
                     {canEdit && (
                       <div className="flex items-center gap-2">
                         <button 
                           onClick={() => handleEditAccount(account)}
-                          className="p-1.5 text-slate-400 hover:text-blue-600 transition-all"
+                          className="p-1.5 text-slate-400 hover:text-brand-blue transition-all"
                         >
                           <Edit2 size={16} />
                         </button>
@@ -1041,7 +1041,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               {canEdit && (
                 <button 
                   onClick={() => setIsAddingProject(true)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
                 >
                   <Plus size={16} /> Novo Projeto
                 </button>
@@ -1057,7 +1057,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                         <h3 className="font-bold text-slate-900 text-lg">{project.name}</h3>
                         <p className="text-sm text-slate-500 mt-1">{project.description || 'Sem descrição'}</p>
                       </div>
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${percentage > 100 ? 'bg-red-100 text-red-600' : 'bg-blue-100 text-blue-600'}`}>
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${percentage > 100 ? 'bg-red-100 text-red-600' : 'bg-brand-blue/15 text-brand-blue'}`}>
                         {percentage.toFixed(1)}%
                       </span>
                     </div>
@@ -1065,7 +1065,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                     <div className="space-y-4">
                       <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden">
                         <div 
-                          className={`h-full rounded-full transition-all ${percentage > 100 ? 'bg-red-500' : percentage > 85 ? 'bg-amber-500' : 'bg-blue-600'}`}
+                          className={`h-full rounded-full transition-all ${percentage > 100 ? 'bg-red-500' : percentage > 85 ? 'bg-brand-yellow' : 'bg-brand-blue'}`}
                           style={{ width: `${Math.min(percentage, 100)}%` }}
                         />
                       </div>
@@ -1083,14 +1083,14 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                     </div>
 
                     <div className="flex items-center justify-between mt-6 pt-4 border-t border-slate-100">
-                      <button className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1">
+                      <button className="text-xs font-bold text-brand-blue hover:underline flex items-center gap-1">
                         <FileText size={14} /> Ver Detalhes
                       </button>
                       {canEdit && (
                         <div className="flex items-center gap-2">
                           <button 
                             onClick={() => handleEditProject(project)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 transition-all"
+                            className="p-1.5 text-slate-400 hover:text-brand-blue transition-all"
                           >
                             <Edit2 size={16} />
                           </button>
@@ -1122,7 +1122,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
               {canEdit && (
                 <button 
                   onClick={() => setIsAddingCategory(true)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all"
+                  className="flex items-center gap-2 bg-brand-blue text-white px-4 py-2 rounded-xl text-sm font-semibold hover:opacity-90 transition-all"
                 >
                   <Plus size={16} /> Nova Categoria
                 </button>
@@ -1130,7 +1130,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-4">
-                <h3 className="text-sm font-bold text-emerald-600 flex items-center gap-2">
+                <h3 className="text-sm font-bold text-brand-green flex items-center gap-2">
                   <TrendingUp size={16} /> Entradas
                 </h3>
                 <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
@@ -1214,7 +1214,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 </button>
                 <button 
                   onClick={() => setTransactionForm(prev => ({ ...prev, type: FinancialTransactionType.INCOME }))}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${transactionForm.type === FinancialTransactionType.INCOME ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500'}`}
+                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${transactionForm.type === FinancialTransactionType.INCOME ? 'bg-white text-brand-green shadow-sm' : 'text-slate-500'}`}
                 >
                   Entrada
                 </button>
@@ -1227,7 +1227,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                     type="text" 
                     value={transactionForm.description}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                     placeholder="Ex: Compra de cabos XLR" 
                   />
                 </div>
@@ -1237,7 +1237,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                     type="number" 
                     value={transactionForm.value}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, value: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/20" 
                     placeholder="0,00" 
                   />
                 </div>
@@ -1247,7 +1247,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                     type="date" 
                     value={transactionForm.date}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   />
                 </div>
                 <div>
@@ -1255,7 +1255,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <select 
                     value={transactionForm.accountId}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, accountId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                   >
                     <option value="">Selecionar...</option>
                     {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
@@ -1266,7 +1266,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <select 
                     value={transactionForm.categoryId}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, categoryId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                   >
                     <option value="">Selecionar...</option>
                     {categories.filter(c => c.type === (transactionForm.type === FinancialTransactionType.INCOME ? 'Entrada' : 'Saída')).map(c => (
@@ -1279,7 +1279,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <select 
                     value={transactionForm.projectId}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, projectId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                   >
                     <option value="">Nenhum</option>
                     {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -1290,7 +1290,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <select 
                     value={transactionForm.paymentMethod}
                     onChange={(e) => setTransactionForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                   >
                     <option value="PIX">PIX</option>
                     <option value="Dinheiro">Dinheiro</option>
@@ -1311,7 +1311,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <button 
                   onClick={handleSaveTransaction}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
+                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
                 </button>
@@ -1341,7 +1341,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   type="text" 
                   value={accountForm.name}
                   onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   placeholder="Ex: Banco do Brasil" 
                 />
               </div>
@@ -1350,7 +1350,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <select 
                   value={accountForm.type}
                   onChange={(e) => setAccountForm(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                 >
                   <option value="Caixa">Caixa (Dinheiro)</option>
                   <option value="Banco">Banco</option>
@@ -1363,7 +1363,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   type="number" 
                   value={accountForm.balance}
                   onChange={(e) => setAccountForm(prev => ({ ...prev, balance: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   placeholder="0,00" 
                 />
               </div>
@@ -1377,7 +1377,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <button 
                   onClick={handleSaveAccount}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
+                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Conta'}
                 </button>
@@ -1407,7 +1407,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   type="text" 
                   value={projectForm.name}
                   onChange={(e) => setProjectForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   placeholder="Ex: Festa da Padroeira 2024" 
                 />
               </div>
@@ -1416,7 +1416,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <textarea 
                   value={projectForm.description}
                   onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20 min-h-[100px]" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10 min-h-[100px]" 
                   placeholder="Detalhes do projeto..."
                 />
               </div>
@@ -1426,7 +1426,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   type="number" 
                   value={projectForm.budgetPlanned}
                   onChange={(e) => setProjectForm(prev => ({ ...prev, budgetPlanned: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   placeholder="0,00" 
                 />
               </div>
@@ -1440,7 +1440,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <button 
                   onClick={handleSaveProject}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
+                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Projeto'}
                 </button>
@@ -1470,7 +1470,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   type="text" 
                   value={categoryForm.name}
                   onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20" 
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
                   placeholder="Ex: Equipamentos" 
                 />
               </div>
@@ -1479,7 +1479,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <select 
                   value={categoryForm.type}
                   onChange={(e) => setCategoryForm(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-blue-500/20"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
                 >
                   <option value="Saída">Saída (Despesa)</option>
                   <option value="Entrada">Entrada (Receita)</option>
@@ -1495,7 +1495,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                 <button 
                   onClick={handleSaveCategory}
                   disabled={loading}
-                  className="px-6 py-2 bg-blue-600 text-white font-bold rounded-xl shadow-md shadow-blue-200 hover:bg-blue-700 transition-all disabled:opacity-50"
+                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
                 >
                   {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Categoria'}
                 </button>

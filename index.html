@@ -15,15 +15,54 @@
 
     <!-- Tailwind via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              brand: {
+                yellow: '#fdb615',
+                blue: '#007cba',
+                green: '#6cc04a',
+              },
+            },
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+      :root {
+        --bento-gap: 1.5rem;
+        --bento-radius: 2rem;
+        --bento-bg: #ffffff;
+        --bento-border: #f1f5f9;
+      }
       html, body {
         height: 100%;
-        overflow: hidden; /* Prevent global window scroll */
+        overflow: hidden;
       }
       body {
-        font-family: 'Inter', sans-serif;
-        background-color: #f3f4f6;
+        font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+        background-color: #f8fafc;
+        color: #0f172a;
+      }
+      
+      .bento-card {
+        background: var(--bento-bg);
+        border: 1px solid var(--bento-border);
+        border-radius: var(--bento-radius);
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .bento-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
       }
       
       /* Custom Discreet Scrollbar for Desktop */

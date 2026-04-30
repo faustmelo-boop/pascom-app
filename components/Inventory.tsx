@@ -169,8 +169,8 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
   // Helper for status colors
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Disponível': return 'bg-green-100 text-green-700 border-green-200';
-      case 'Em Uso': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'Disponível': return 'bg-brand-green/10 text-brand-green border-brand-green/20';
+      case 'Em Uso': return 'bg-brand-blue/10 text-brand-blue border-brand-blue/10';
       case 'Em Manutenção': return 'bg-red-100 text-red-700 border-red-200';
       default: return 'bg-gray-100 text-gray-700';
     }
@@ -178,9 +178,9 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
 
   const getConditionIcon = (condition: string) => {
     switch(condition) {
-        case 'Novo': return <CheckCircle2 size={14} className="text-green-500" />;
-        case 'Bom': return <CheckCircle2 size={14} className="text-blue-500" />;
-        case 'Regular': return <AlertCircle size={14} className="text-yellow-500" />;
+        case 'Novo': return <CheckCircle2 size={14} className="text-brand-green" />;
+        case 'Bom': return <CheckCircle2 size={14} className="text-brand-blue" />;
+        case 'Regular': return <AlertCircle size={14} className="text-brand-yellow" />;
         case 'Ruim': return <AlertTriangle size={14} className="text-orange-500" />;
         case 'Danificado': return <Wrench size={14} className="text-red-500" />;
         default: return null;
@@ -195,48 +195,46 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
   });
 
   return (
-    <div className="max-w-6xl mx-auto p-4 pb-24 lg:pb-8">
+    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
-            <Box className="text-blue-600" /> Patrimônio
-          </h2>
-          <p className="text-sm text-gray-500">Gerencie equipamentos e inventário da Pascom</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Patrimônio</h1>
+          <p className="text-slate-500 font-medium text-lg italic">Gestão de equipamentos e infraestrutura da pastoral</p>
         </div>
         
         {isAdmin && (
           <button 
             onClick={() => handleOpenModal()}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors shadow-sm flex items-center gap-2"
+            className="bg-brand-blue text-white px-6 py-3.5 rounded-3xl font-extrabold transition-all shadow-xl shadow-brand-blue/10 flex items-center gap-2 hover:opacity-90 active:scale-95"
           >
-            <Plus size={18} /> Novo Item
+            <Plus size={20} /> Novo Item
           </button>
         )}
-      </div>
+      </header>
 
       {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row gap-4 mb-6">
-        <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+      <div className="flex flex-col xl:flex-row gap-6 items-center bg-slate-50/50 p-6 rounded-[2.5rem] border border-slate-100 shadow-sm">
+        <div className="flex-1 w-full relative group">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-brand-blue transition-colors" size={20} />
             <input 
                 type="text" 
-                placeholder="Buscar equipamento..." 
+                placeholder="O que você está procurando?" 
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none placeholder-gray-500"
+                className="w-full pl-12 pr-4 py-3.5 bg-white text-slate-900 border border-slate-200 rounded-2xl focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-slate-400 font-medium transition-all shadow-sm"
             />
         </div>
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 sm:pb-0 hide-scroll">
-            <Filter size={18} className="text-gray-400 shrink-0" />
+        <div className="flex items-center gap-2 overflow-x-auto pb-2 xl:pb-0 hide-scroll w-full xl:w-auto">
+            <Filter size={20} className="text-slate-400 shrink-0 mr-2" />
             {['Todos', 'Disponível', 'Em Uso', 'Em Manutenção'].map(status => (
                 <button
                     key={status}
                     onClick={() => setFilterStatus(status)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors border ${
+                    className={`px-6 py-2.5 rounded-2xl text-xs font-black uppercase tracking-widest whitespace-nowrap transition-all border-2 ${
                         filterStatus === status 
-                        ? 'bg-gray-800 text-white border-gray-800' 
-                        : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105' 
+                        : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:bg-slate-50'
                     }`}
                 >
                     {status}
@@ -246,31 +244,34 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-8">
         {filteredItems.map(item => {
             const holder = users.find(u => u.id === item.holderId);
+            const statusColor = getStatusColor(item.status);
             
             return (
-                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow group flex flex-col">
-                    {/* Image Area */}
-                    <div className="h-48 bg-gray-100 relative overflow-hidden">
+                <div key={item.id} className="bento-card border-slate-100 bg-white flex flex-col group overflow-hidden shadow-sm hover:border-brand-blue/20 transition-all cursor-default">
+                    {/* Image Area - Aspect ratio fixed */}
+                    <div className="aspect-[4/3] bg-slate-50 relative overflow-hidden rounded-[2rem] mb-6">
                         {item.image ? (
-                            <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                            <img src={item.image} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                         ) : (
-                            <div className="w-full h-full flex items-center justify-center text-gray-300">
-                                <Box size={48} />
+                            <div className="w-full h-full flex items-center justify-center text-slate-200">
+                                <Box size={64} strokeWidth={1.5} />
                             </div>
                         )}
-                        <span className={`absolute top-2 right-2 px-2 py-1 rounded text-[10px] font-bold uppercase shadow-sm border ${getStatusColor(item.status)}`}>
+                        
+                        <div className={`absolute top-4 left-4 px-3 py-1 rounded-xl text-[10px] font-black uppercase tracking-widest shadow-md border backdrop-blur-md ${statusColor}`}>
                             {item.status}
-                        </span>
+                        </div>
+
                         {/* Admin Actions Overlay */}
                         {isAdmin && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button onClick={() => handleOpenModal(item)} className="p-2 bg-white rounded-full text-gray-700 hover:text-blue-600 transition-colors">
+                            <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all transform translate-x-4 group-hover:translate-x-0">
+                                <button onClick={() => handleOpenModal(item)} className="p-3 bg-white/90 backdrop-blur-sm rounded-2xl text-slate-700 hover:text-brand-blue shadow-xl transition-all hover:scale-110 active:scale-95">
                                     <Edit2 size={18} />
                                 </button>
-                                <button onClick={() => setDeleteId(item.id)} className="p-2 bg-white rounded-full text-gray-700 hover:text-red-600 transition-colors">
+                                <button onClick={() => setDeleteId(item.id)} className="p-3 bg-white/90 backdrop-blur-sm rounded-2xl text-slate-700 hover:text-rose-600 shadow-xl transition-all hover:scale-110 active:scale-95">
                                     <Trash2 size={18} />
                                 </button>
                             </div>
@@ -278,32 +279,45 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                     </div>
 
                     {/* Content */}
-                    <div className="p-4 flex-1 flex flex-col">
-                        <div className="flex justify-between items-start mb-2">
-                            <h3 className="font-bold text-gray-900 line-clamp-1" title={item.name}>{item.name}</h3>
+                    <div className="flex-1 flex flex-col">
+                        <div className="flex justify-between items-start mb-3">
+                            <h3 className="text-xl font-extrabold text-slate-900 tracking-tight leading-tight group-hover:text-brand-blue transition-colors">{item.name}</h3>
                         </div>
                         
-                        <div className="flex items-center gap-1.5 mb-3 text-xs text-gray-600 bg-gray-50 w-fit px-2 py-1 rounded border border-gray-100">
-                             {getConditionIcon(item.condition)}
-                             <span>Estado: {item.condition}</span>
+                        <div className="flex items-center gap-2 mb-4">
+                             <div className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-widest text-slate-500 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-100">
+                                {getConditionIcon(item.condition)}
+                                <span>{item.condition}</span>
+                             </div>
                         </div>
 
-                        <p className="text-sm text-gray-500 mb-4 line-clamp-2 flex-1">{item.description || 'Sem descrição.'}</p>
+                        <p className="text-slate-500 text-sm font-medium leading-relaxed mb-6 line-clamp-2">
+                          {item.description || 'Nenhuma especificação técnica disponível para este equipamento.'}
+                        </p>
 
-                        <div className="border-t border-gray-100 pt-3 mt-auto">
-                            <p className="text-xs text-gray-400 font-medium uppercase mb-2">Responsável Atual</p>
-                            <div className="flex items-center gap-2">
+                        <div className="mt-auto pt-6 border-t border-slate-50">
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Custódia Atual</p>
+                            <div className="flex items-center gap-3 bg-slate-50/50 p-2 rounded-2xl border border-slate-100/50 ring-4 ring-transparent group-hover:ring-slate-50 transition-all">
                                 {holder ? (
                                     <>
-                                        <img src={holder.avatar} alt={holder.name} className="w-8 h-8 rounded-full object-cover border border-gray-200" />
-                                        <span className="text-sm font-medium text-gray-700 truncate">{holder.name}</span>
+                                        <div className="relative">
+                                          <img src={holder.avatar} alt={holder.name} className="w-10 h-10 rounded-xl object-cover border-2 border-white shadow-sm" />
+                                          <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-brand-green rounded-full border-2 border-white"></div>
+                                        </div>
+                                        <div className="flex flex-col">
+                                          <span className="text-sm font-extrabold text-slate-800 leading-none mb-1">{holder.name}</span>
+                                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">Membro Pascom</span>
+                                        </div>
                                     </>
                                 ) : (
-                                    <div className="flex items-center gap-2 text-gray-400">
-                                        <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center">
-                                            <UserIcon size={14} />
+                                    <div className="flex items-center gap-3 text-slate-400">
+                                        <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-inner">
+                                            <UserIcon size={18} className="opacity-40" />
                                         </div>
-                                        <span className="text-sm italic">Não atribuído</span>
+                                        <div className="flex flex-col">
+                                          <span className="text-sm font-extrabold text-slate-300 italic leading-none mb-1">Armazenado</span>
+                                          <span className="text-[10px] font-bold text-slate-200 uppercase tracking-tighter">Sede Paroquial</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
@@ -315,10 +329,12 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
       </div>
 
       {filteredItems.length === 0 && (
-          <div className="text-center py-12 bg-gray-50 rounded-xl border border-dashed border-gray-200">
-              <Box className="mx-auto text-gray-300 mb-3" size={48} />
-              <p className="text-gray-500 font-medium">Nenhum equipamento encontrado.</p>
-              {searchTerm && <p className="text-gray-400 text-sm mt-1">Tente ajustar sua busca.</p>}
+          <div className="flex flex-col items-center justify-center p-20 bg-slate-50/50 rounded-[3rem] border-2 border-dashed border-slate-200 text-center animate-in zoom-in-95">
+              <div className="p-6 bg-white rounded-3xl shadow-sm mb-6 text-slate-200">
+                <Box size={64} strokeWidth={1} />
+              </div>
+              <p className="text-xl font-extrabold text-slate-900 tracking-tight">Nenhum equipamento encontrado</p>
+              <p className="text-slate-500 font-medium mt-2">Tente buscar por termos mais genéricos ou mude os filtros.</p>
           </div>
       )}
 
@@ -370,7 +386,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                         type="text" 
                         value={formData.name}
                         onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none placeholder-gray-500"
+                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-gray-500"
                         placeholder="Ex: Câmera Canon T7i"
                     />
                 </div>
@@ -381,7 +397,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                         value={formData.description}
                         onChange={(e) => setFormData({...formData, description: e.target.value})}
                         rows={3}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none resize-none placeholder-gray-500"
+                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none resize-none placeholder-gray-500"
                         placeholder="Detalhes, número de série, acessórios inclusos..."
                     />
                 </div>
@@ -392,7 +408,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                         <select 
                             value={formData.condition}
                             onChange={(e) => setFormData({...formData, condition: e.target.value as any})}
-                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
                         >
                             {['Novo', 'Bom', 'Regular', 'Ruim', 'Danificado'].map(c => <option key={c} value={c}>{c}</option>)}
                         </select>
@@ -402,7 +418,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                         <select 
                             value={formData.status}
                             onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
                         >
                             {['Disponível', 'Em Uso', 'Em Manutenção'].map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
@@ -414,7 +430,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                     <select 
                         value={formData.holderId}
                         onChange={(e) => setFormData({...formData, holderId: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
                     >
                         <option value="">-- Ninguém (No armário) --</option>
                         {users.map(u => (
@@ -434,7 +450,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
               <button 
                 onClick={handleSave}
                 disabled={loading}
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
+                className="px-6 py-2 bg-brand-blue text-white font-medium rounded-lg hover:opacity-90 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
               >
                 {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
                 Salvar

@@ -26,6 +26,7 @@ export interface User {
   avatar: string;
   birthday: string; // ISO date
   skills: string[];
+  unavailableDates?: string[]; // Array of ISO date strings (YYYY-MM-DD)
 }
 
 export const isCoordinator = (role: string | UserRole): boolean => {
@@ -63,6 +64,7 @@ export interface ScheduleEvent {
   date: string; // ISO date
   time: string;
   type: 'Missa' | 'Evento' | 'Reunião';
+  archived?: boolean;
   roles: {
     roleName: string; // e.g. "Fotografia", "Transmissão"
     assignedUserId?: string | null;
