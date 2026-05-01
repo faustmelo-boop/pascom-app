@@ -108,7 +108,8 @@ export const Login: React.FC = () => {
                             email: email, // Optional, depending on schema, but good for redundancy
                             role: UserRole.AGENT, // Default role
                             avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=fdb615&color=fff`,
-                            skills: []
+                            skills: [],
+                            onboarding_completed: false
                         }
                     ]);
                 

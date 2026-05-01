@@ -26,6 +26,7 @@ export interface User {
   avatar: string;
   birthday: string; // ISO date
   skills: string[];
+  onboarding_completed?: boolean;
   unavailableDates?: string[]; // Array of ISO date strings (YYYY-MM-DD)
 }
 

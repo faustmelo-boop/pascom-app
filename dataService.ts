@@ -10,9 +10,10 @@ export const fetchUsers = async (): Promise<User[]> => {
       id: p.id,
       name: p.name ? p.name.split(' ').slice(0, 2).join(' ') : 'Sem Nome',
       role: p.role,
-      avatar: p.avatar,
+      avatar: p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name || 'User')}&background=fdb615&color=fff`,
       birthday: p.birthday || p.birth_date || p.birthdate || p.data_nascimento || p.nascimento || p.aniversario || '',
       skills: skills.filter((s: string) => !s.startsWith('[DISP:')),
+      onboarding_completed: p.onboarding_completed ?? true, // Default to true for existing users
       unavailableDates: skills
         .filter((s: string) => s.startsWith('[DISP:'))
         .map((s: string) => s.match(/\[DISP:(.+?)\]/)?.[1])

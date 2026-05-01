@@ -23,6 +23,7 @@ import { Registrations } from './components/Registrations';
 import { FinancialPatrimony } from './components/FinancialPatrimony';
 import { Dashboard } from './components/Dashboard';
 import { LoadingScreen } from './components/LoadingScreen';
+import { OnboardingModal } from './components/OnboardingModal';
 
 type Tab = 'dashboard' | 'escalas' | 'tarefas' | 'ava' | 'agentes' | 'patrimonio' | 'tesouro' | 'perfil';
 
@@ -340,6 +341,12 @@ function App() {
       <main className="flex-1 flex flex-col h-full min-w-0 relative overflow-hidden">
         <NotificationsPanel notifications={notifications} isOpen={notificationsOpen} onClose={() => setNotificationsOpen(false)} onMarkAsRead={handleMarkAsRead} onMarkAllAsRead={handleMarkAllAsRead} onClearAll={handleClearAll} onRequestSystemPermissions={requestSystemNotificationPermission} />
         
+        <AnimatePresence>
+          {currentUser && currentUser.onboarding_completed === false && (
+            <OnboardingModal user={currentUser} onComplete={refreshData} />
+          )}
+        </AnimatePresence>
+
         {/* Mobile Header */}
         <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 shrink-0 flex justify-between items-center z-50 sticky top-0">
            <div className="flex items-center gap-2">
