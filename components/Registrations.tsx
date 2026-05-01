@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../supabaseClient';
 import { User, isCoordinator } from '../types';
 import { 
   ClipboardList, Search, Trash2, Loader2, 
-  Eye, X, Mail, Phone, Database
+  Eye, X, Mail, Phone, Database, Save, Loader2 as Spinner
 } from 'lucide-react';
 
 interface RegistrationsProps {
@@ -16,6 +18,29 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    if (selectedItem) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [selectedItem]);
 
   // Verificação de Coordenador/Admin
   const isAdmin = currentUser && isCoordinator(currentUser.role);
@@ -86,7 +111,7 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-8 space-y-8 animate-in fade-in duration-700">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 py-4">
         <div>
@@ -202,69 +227,84 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
         </div>
       )}
 
-      {/* MODAL DE DETALHES (Bento Style) */}
-      {selectedItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.14)] w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col border border-white/20 animate-in zoom-in-95 duration-500">
-            <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-              <div className="flex items-center gap-5">
-                <div className="p-4 bg-brand-blue text-white rounded-3xl shadow-xl shadow-brand-blue/10 ring-4 ring-brand-blue/5">
-                  <Database size={24} />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none mb-1">Ficha do Participante</h3>
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {selectedItem.id}</p>
-                </div>
-              </div>
-              <button 
-                onClick={() => setSelectedItem(null)} 
-                className="p-3 text-slate-400 hover:text-slate-600 bg-white rounded-2xl shadow-sm border border-slate-100 transition-all hover:rotate-90 active:scale-90"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div className="p-10 overflow-y-auto">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {Object.entries(selectedItem).map(([key, value]) => {
-                  if (key.startsWith('_') || key === 'id') return null;
-                  
-                  return (
-                    <div key={key} className="p-5 bg-slate-50 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:border-brand-blue/20 group">
-                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 group-hover:text-brand-blue transition-colors">
-                        {key.replace(/_/g, ' ')}
-                      </span>
-                      <div className="text-base text-slate-800 break-words font-extrabold leading-tight">
-                        {typeof value === 'object' ? (
-                          <pre className="text-[11px] bg-slate-900 text-slate-300 p-4 rounded-2xl mt-2 overflow-x-auto border-2 border-slate-800 font-mono shadow-inner">
-                            {JSON.stringify(value, null, 2)}
-                          </pre>
-                        ) : (
-                          String(value || "---")
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="p-8 bg-slate-50/50 border-t border-slate-50 flex gap-4">
-              <button 
-                onClick={() => handleDelete(selectedItem.id)}
-                className="flex-1 py-4 px-6 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-[1.5rem] text-xs transition-all flex items-center justify-center gap-2"
-              >
-                <Trash2 size={18} /> Remover Inscrição
-              </button>
-              <button 
+      {/* MODAL DE DETALHES (Bento Style) - PORTALED */}
+      {createPortal(
+        <AnimatePresence>
+          {selectedItem && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
                 onClick={() => setSelectedItem(null)}
-                className="flex-1 py-4 px-8 bg-slate-900 text-white rounded-[1.5rem] text-sm font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-slate-800 transition-all active:scale-95"
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col relative z-[1010]"
               >
-                Fechar Visualização
-              </button>
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative group/reg">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/reg:rotate-12 duration-500">
+                      <Database size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">Ficha do Participante</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">ID: {selectedItem.id.slice(0, 12)}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setSelectedItem(null)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={24} strokeWidth={3} />
+                  </button>
+                </div>
+                
+                <div className="p-10 overflow-y-auto flex-1 hide-scroll">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    {Object.entries(selectedItem).map(([key, value]) => {
+                      if (key.startsWith('_') || key === 'id') return null;
+                      
+                      return (
+                        <div key={key} className="p-6 bg-slate-50 rounded-[2rem] border border-slate-100 transition-all hover:bg-white hover:border-brand-blue/20 hover:shadow-xl hover:shadow-slate-100/50 group/item">
+                          <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-2 group-hover/item:text-brand-blue transition-colors">
+                            {key.replace(/_/g, ' ')}
+                          </span>
+                          <div className="text-base text-slate-800 break-words font-black leading-tight">
+                            {typeof value === 'object' ? (
+                              <pre className="text-[11px] bg-slate-900 text-slate-300 p-5 rounded-[1.5rem] mt-3 overflow-x-auto border-2 border-slate-800 font-mono shadow-inner">
+                                {JSON.stringify(value, null, 2)}
+                              </pre>
+                            ) : (
+                              String(value || "---")
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-b-[3rem]">
+                  <button 
+                    onClick={() => handleDelete(selectedItem.id)}
+                    className="w-full sm:w-auto px-6 py-4 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-2xl text-[10px] transition-all flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={18} /> Remover Inscrição Permanente
+                  </button>
+                  <button 
+                    onClick={() => setSelectedItem(null)}
+                    className="w-full sm:w-auto bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-100/50 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all"
+                  >
+                    Encerrar Visualização
+                  </button>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

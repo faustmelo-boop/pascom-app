@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ScheduleEvent, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
@@ -27,6 +27,11 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
   // Archive confirmation state
   const [archiveConfirmId, setArchiveConfirmId] = useState<string | null>(null);
 
+  // Decline Justification Modal State
+  const [declineModalOpen, setDeclineModalOpen] = useState(false);
+  const [declineData, setDeclineData] = useState<{scheduleId: string, roleIndex: number} | null>(null);
+  const [justification, setJustification] = useState('');
+
   // Availability State
   const [availabilityModalOpen, setAvailabilityModalOpen] = useState(false);
   const [unavailableDate, setUnavailableDate] = useState(new Date().toISOString().split('T')[0]);
@@ -35,10 +40,30 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<{title: string, msg: string, code?: string} | null>(null);
 
-  // Decline Justification Modal State
-  const [declineModalOpen, setDeclineModalOpen] = useState(false);
-  const [declineData, setDeclineData] = useState<{scheduleId: string, roleIndex: number} | null>(null);
-  const [justification, setJustification] = useState('');
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    const isAnyModalOpen = isModalOpen || declineModalOpen || availabilityModalOpen || deleteId || archiveConfirmId;
+    
+    if (isAnyModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, declineModalOpen, availabilityModalOpen, deleteId, archiveConfirmId]);
 
   const [roleLoading, setRoleLoading] = useState<string | null>(null);
 
@@ -487,9 +512,9 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-10 space-y-12 min-h-screen pb-32">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-10 space-y-8 min-h-screen pb-32">
       {/* Header */}
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-6">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-2">
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -768,19 +793,21 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
         <AnimatePresence>
           {/* CONFIRM DELETE MODAL */}
           {deleteId && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-              >
+              <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
                   <motion.div 
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-sm w-full text-center border border-slate-100"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                    onClick={() => setDeleteId(null)}
+                  />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-[2010]"
                   >
-                      <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-3xl flex items-center justify-center mx-auto mb-8 rotate-3 shadow-inner">
+                      <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2.2rem] flex items-center justify-center mx-auto mb-8 shadow-inner ring-8 ring-rose-50/50">
                           <Trash2 size={32} strokeWidth={2.5} />
                       </div>
                       <h3 className="text-2xl font-black text-slate-900 mb-3 tracking-tight">Excluir Escala?</h3>
@@ -804,29 +831,34 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                           </button>
                       </div>
                   </motion.div>
-              </motion.div>
+              </div>
           )}
 
           {/* DECLINE JUSTIFICATION MODAL */}
           {declineModalOpen && (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-              >
+              <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                    onClick={() => setDeclineModalOpen(false)}
+                  />
                   <motion.div 
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-100"
+                    className="bg-white rounded-[3rem] shadow-2xl w-full max-w-md overflow-hidden relative z-[1010]"
                   >
-                      <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-center bg-slate-50">
-                          <div>
-                            <h3 className="text-2xl font-black text-rose-600 flex items-center gap-3 tracking-tight uppercase"><ThumbsDown size={24} /> Recusar</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Informe sua coordenação</p>
+                      <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                          <div className="relative z-10">
+                            <h3 className="text-2xl font-black text-white flex items-center gap-3 tracking-tight uppercase leading-none mb-1"><ThumbsDown size={24} /> Recusar</h3>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Informe sua coordenação</p>
                           </div>
-                          <button onClick={() => setDeclineModalOpen(false)} className="p-3 bg-white text-slate-300 hover:text-slate-600 rounded-2xl transition-all shadow-sm"><X size={20} /></button>
+                          <button onClick={() => setDeclineModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                            <X size={24} strokeWidth={3} />
+                          </button>
                       </div>
                       
                       <div className="p-10 space-y-6">
@@ -852,39 +884,42 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                           </button>
                       </div>
                   </motion.div>
-              </motion.div>
+              </div>
           )}
 
           {/* CREATE / EDIT MODAL */}
           {isModalOpen && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-            >
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => setIsModalOpen(false)}
+              />
               <motion.div 
                 initial={{ scale: 0.95, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 30 }}
-                className="bg-white rounded-[3rem] w-full max-w-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[90vh] overflow-hidden border border-slate-100"
+                className="bg-white rounded-[3rem] w-full max-w-3xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[90vh] overflow-hidden relative z-[1010]"
               >
-                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center group/header">
-                  <div className="flex items-center gap-6">
-                    <div className="w-16 h-16 bg-brand-blue/10 text-brand-blue rounded-3xl flex items-center justify-center transition-transform group-hover/header:rotate-12 duration-500">
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative group/header">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/header:rotate-12 duration-500">
                       <CalendarIcon size={32} />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{editingId ? 'Ajustar Atividade' : 'Planejar Momento'}</h3>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Gerenciamento de Recurso Humano</p>
+                      <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">{editingId ? 'Ajustar Atividade' : 'Planejar Momento'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Gerenciamento de Recurso Humano</p>
                     </div>
                   </div>
-                  <button onClick={() => setIsModalOpen(false)} className="p-4 bg-slate-50 text-slate-300 hover:text-slate-900 hover:bg-slate-100 rounded-2xl transition-all">
+                  <button onClick={() => setIsModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
                     <X size={24} strokeWidth={3} />
                   </button>
                 </div>
                 
-                <div className="p-10 overflow-y-auto flex-1 space-y-10 custom-scrollbar">
+                <div className="p-10 overflow-y-auto flex-1 space-y-10 hide-scroll">
                   {/* Content would go here - for brevity, keeping the flow */}
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1004,53 +1039,72 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                   </div>
                 </div>
 
-                <div className="p-10 bg-slate-50 flex items-center justify-end gap-4 rounded-b-[3rem]">
-                   <button 
-                     onClick={() => setIsModalOpen(false)}
-                     className="px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[11px] uppercase tracking-widest transition-all"
-                   >
-                     Descartar Alterações
-                   </button>
-                   <button 
-                     onClick={handleSave}
-                     disabled={loading || !formData.title}
-                     className="bg-brand-blue text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-brand-blue/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50 flex items-center gap-3"
-                   >
-                     {loading ? <Loader2 className="animate-spin" /> : <Save size={18} />} {editingId ? 'Atualizar Escala' : 'Lançar Escala'}
-                   </button>
+                <div className="p-10 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-6 border-t border-slate-100 rounded-b-[3rem]">
+                   <div className="flex items-center gap-4 w-full sm:w-auto">
+                     {editingId && (
+                        <button 
+                          type="button"
+                          onClick={(e) => onRequestDelete(editingId, e)}
+                          className="flex-1 sm:flex-none px-6 py-4 bg-white text-rose-500 border border-rose-100 hover:bg-rose-50 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                        >
+                          <Trash2 size={16} /> Excluir
+                        </button>
+                     )}
+                   </div>
+                   <div className="flex items-center gap-4 w-full sm:w-auto">
+                      <button 
+                        type="button"
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex-1 sm:flex-none px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
+                      >
+                        Descartar
+                      </button>
+                      <button 
+                        onClick={handleSave}
+                        disabled={loading || !formData.title}
+                        className="flex-1 sm:flex-none bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                      >
+                        {loading ? <Loader2 className="animate-spin" /> : <Save size={18} />} 
+                        <span>{editingId ? 'Atualizar Escala' : 'Lançar Escala'}</span>
+                      </button>
+                   </div>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
 
-          {/* AVAILABILITY MODAL */}
           {availabilityModalOpen && (
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
-            >
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => setAvailabilityModalOpen(false)}
+              />
               <motion.div 
                 initial={{ scale: 0.95, opacity: 0, y: 30 }}
                 animate={{ scale: 1, opacity: 1, y: 0 }}
                 exit={{ scale: 0.95, opacity: 0, y: 30 }}
-                className="bg-white rounded-[3rem] w-full max-w-xl shadow-2xl border border-slate-100 flex flex-col"
+                className="bg-white rounded-[3rem] w-full max-w-xl shadow-2xl overflow-hidden relative z-[1010] flex flex-col"
               >
-                <div className="p-10 border-b border-slate-50 flex justify-between items-center group/avail">
-                  <div className="flex items-center gap-5">
-                    <div className="w-14 h-14 bg-brand-green/10 text-brand-green rounded-2xl flex items-center justify-center transition-transform group-hover/avail:rotate-6 duration-500">
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-brand-green relative group/avail">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-5 relative z-10">
+                    <div className="w-14 h-14 bg-white/10 backdrop-blur-md text-white rounded-2xl flex items-center justify-center transition-transform border border-white/10 group-hover/avail:rotate-6 duration-500 shadow-lg">
                       <CalendarDays size={28} />
                     </div>
                     <div>
-                      <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-tight">Minha Disponibilidade</h3>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Datas fora do fluxo de trabalho</p>
+                      <h3 className="text-2xl font-black text-white tracking-tight leading-none mb-1">Minha Disponibilidade</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Datas fora do fluxo de trabalho</p>
                     </div>
                   </div>
-                  <button onClick={() => setAvailabilityModalOpen(false)} className="p-3 bg-slate-50 text-slate-300 hover:text-slate-900 rounded-2xl transition-all"><X size={20} /></button>
+                  <button onClick={() => setAvailabilityModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={20} strokeWidth={3} />
+                  </button>
                 </div>
 
-                <div className="p-6 sm:p-10 space-y-8 overflow-y-auto max-h-[60vh] custom-scrollbar">
+                <div className="p-6 sm:p-10 space-y-8 overflow-y-auto max-h-[60vh] hide-scroll">
                    <div className="space-y-4">
                      <p className="text-xs font-bold text-slate-500 leading-relaxed italic border-l-4 border-brand-green pl-4">Datas marcadas alertam a coordenação sobre sua folga.</p>
                      
@@ -1108,16 +1162,16 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                    </div>
                 </div>
 
-                <div className="p-10 bg-slate-50 flex justify-end items-center rounded-b-[3rem]">
+                <div className="p-10 bg-slate-50/50 flex justify-end items-center border-t border-slate-100 rounded-b-[3rem]">
                    <button 
                      onClick={() => setAvailabilityModalOpen(false)}
-                     className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-xl shadow-slate-900/20 active:scale-95 transition-all"
+                     className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:scale-105 active:scale-95 transition-all"
                    >
                      Fechar Painel
                    </button>
                 </div>
               </motion.div>
-            </motion.div>
+            </div>
           )}
         </AnimatePresence>,
         document.body

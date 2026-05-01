@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Course, DocumentItem, User, UserRole, Lesson, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { 
@@ -58,6 +59,31 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
   
   // Document Upload States
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+  // Scroll lock when any modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    const isAnyModalOpen = isCourseModalOpen || isLessonModalOpen || isTopicModalOpen || !!lessonToDelete || isUploadModalOpen;
+    
+    if (isAnyModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isCourseModalOpen, isLessonModalOpen, isTopicModalOpen, lessonToDelete, isUploadModalOpen]);
 
   // Permissions unificada
   const isAdmin = currentUser && isCoordinator(currentUser.role);
@@ -458,7 +484,7 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
         {/* Main Content Area */}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
             
-            <div className="p-6 md:p-12 overflow-y-auto flex-1 hide-scroll scroll-smooth">
+            <div className="px-4 pt-1 md:p-12 overflow-y-auto flex-1 hide-scroll scroll-smooth">
                 
                 {/* --- VIEW: DASHBOARD --- */}
                 {viewMode === 'dashboard' && (
@@ -951,247 +977,291 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
 
         {/* MODALS RE-IMPLEMENTED FOR CONSISTENCY AND BEAUTY */}
         
-        {/* Modal: Novo Curso */}
-        <AnimatePresence>
-            {isCourseModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" 
-                        onClick={() => setIsCourseModalOpen(false)} 
-                    />
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                        className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col p-10 ring-1 ring-black/5"
-                    >
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">{editingCourseId ? 'Editar Curso' : 'Criar Novo Curso'}</h3>
-                            <button onClick={() => setIsCourseModalOpen(false)} className="p-3 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-xl transition-all active:scale-90"><X size={24} /></button>
-                        </div>
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Título do Curso</label>
-                                <input 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all"
-                                    placeholder="Ex: Formação em Redes Sociais"
-                                    value={courseFormData.title}
-                                    onChange={(e) => setCourseFormData({...courseFormData, title: e.target.value})}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Categoria</label>
-                                <select 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-black text-slate-800 uppercase tracking-widest text-[10px] appearance-none"
-                                    value={courseFormData.category}
-                                    onChange={(e) => setCourseFormData({...courseFormData, category: e.target.value})}
-                                >
-                                    <option value="Geral">Geral</option>
-                                    <option value="Fotografia">Fotografia</option>
-                                    <option value="Design">Design</option>
-                                    <option value="Liturgia">Liturgia</option>
-                                    <option value="Redes Sociais">Redes Sociais</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Capa do Curso (URL ou Upload)</label>
-                                <div className="flex gap-4 items-center">
-                                    <div className="flex-1">
-                                        <input 
-                                            className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all text-xs"
-                                            placeholder="URL da imagem (pode deixar em branco)"
-                                            value={courseFormData.thumbnail}
-                                            onChange={(e) => setCourseFormData({...courseFormData, thumbnail: e.target.value})}
-                                        />
+        {/* PORTALED MODALS */}
+        {createPortal(
+            <AnimatePresence>
+                {/* Modal: Novo Curso */}
+                {isCourseModalOpen && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
+                            onClick={() => setIsCourseModalOpen(false)} 
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                            className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-[1010] overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative group/course">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                                <div className="flex items-center gap-6 relative z-10">
+                                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/course:rotate-12 duration-500">
+                                        <BookOpen size={32} />
                                     </div>
-                                    <button 
-                                        onClick={() => courseFileInputRef.current?.click()}
-                                        className="shrink-0 p-5 bg-white border-2 border-slate-100 text-slate-400 hover:text-brand-blue hover:border-brand-blue rounded-2xl shadow-sm transition-all active:scale-95"
+                                    <div>
+                                        <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">{editingCourseId ? 'Editar Curso' : 'Criar Novo Curso'}</h3>
+                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Gestão de Aprendizado</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsCourseModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                                    <X size={24} strokeWidth={3} />
+                                </button>
+                            </div>
+
+                            <div className="p-10 overflow-y-auto flex-1 space-y-8 hide-scroll">
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título do Curso *</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all text-slate-900"
+                                        placeholder="Ex: Formação Missionária II"
+                                        value={courseFormData.title}
+                                        onChange={(e) => setCourseFormData({...courseFormData, title: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria de Ensino</label>
+                                    <select 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                                        value={courseFormData.category}
+                                        onChange={(e) => setCourseFormData({...courseFormData, category: e.target.value})}
                                     >
-                                        <Camera size={24} />
-                                    </button>
-                                    <input type="file" ref={courseFileInputRef} className="hidden" accept="image/*" onChange={handleCourseImageSelect} />
+                                        <option value="Geral">Geral</option>
+                                        <option value="Espiritualidade">Espiritualidade</option>
+                                        <option value="Técnico">Técnico</option>
+                                        <option value="Liderança">Liderança</option>
+                                    </select>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Capa do Curso</label>
+                                    <div className="flex gap-4">
+                                        <div className="flex-1">
+                                            <input 
+                                                className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all"
+                                                placeholder="URL ou Upload..."
+                                                value={courseFormData.thumbnail}
+                                                onChange={(e) => setCourseFormData({...courseFormData, thumbnail: e.target.value})}
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={() => courseFileInputRef.current?.click()}
+                                            className="shrink-0 w-14 h-14 bg-white border border-slate-200 text-slate-400 hover:text-brand-blue hover:border-brand-blue rounded-2xl shadow-sm transition-all active:scale-95 flex items-center justify-center p-0"
+                                        >
+                                            <Camera size={24} />
+                                        </button>
+                                        <input type="file" ref={courseFileInputRef} className="hidden" accept="image/*" onChange={handleCourseImageSelect} />
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="mt-12 flex gap-4">
-                            <button 
-                                onClick={() => setIsCourseModalOpen(false)} 
-                                className="flex-1 bg-slate-100 text-slate-600 py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                onClick={handleSaveCourse}
-                                disabled={courseLoading || !courseFormData.title}
-                                className="flex-1 bg-brand-blue text-white py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:bg-brand-blue/90 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {courseLoading ? <Loader2 className="animate-spin" size={18} /> : <><Save size={18} /> Salvar Curso</>}
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
 
-        {/* Modal: Nova Aula */}
-        <AnimatePresence>
-            {isLessonModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" 
-                        onClick={() => setIsLessonModalOpen(false)} 
-                    />
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                        className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col p-10 ring-1 ring-black/5"
-                    >
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Adicionar Aula / Atividade</h3>
-                            <button onClick={() => setIsLessonModalOpen(false)} className="p-3 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-xl transition-all active:scale-90"><X size={24} /></button>
-                        </div>
-                        <div className="space-y-6 flex-1 max-h-[60vh] overflow-y-auto px-1 hide-scroll">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Título da Aula</label>
-                                <input 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all"
-                                    placeholder="Ex: Introdução ao Canva"
-                                    value={lessonFormData.title}
-                                    onChange={(e) => setLessonFormData({...lessonFormData, title: e.target.value})}
-                                />
+                            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end gap-5 rounded-b-[3rem]">
+                                <button 
+                                    onClick={() => setIsCourseModalOpen(false)} 
+                                    className="px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleSaveCourse}
+                                    disabled={courseLoading || !courseFormData.title}
+                                    className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+                                >
+                                    {courseLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    Confirmar Curso
+                                </button>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Link do Vídeo ou Conteúdo (YouTube/Vimeo/Embed)</label>
-                                <input 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all text-xs"
-                                    placeholder="Cole a URL ou código <iframe>"
-                                    value={lessonFormData.videoUrl}
-                                    onChange={(e) => setLessonFormData({...lessonFormData, videoUrl: e.target.value})}
-                                />
+                        </motion.div>
+                    </div>
+                )}
+
+                {/* Modal: Nova Aula */}
+                {isLessonModalOpen && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
+                            onClick={() => setIsLessonModalOpen(false)} 
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                            className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-[1010] overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-brand-blue relative group/lesson">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                                <div className="flex items-center gap-6 relative z-10">
+                                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/lesson:rotate-12 duration-500">
+                                        <Plus size={32} strokeWidth={3} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">Nova Atividade</h3>
+                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Conteúdo Curricular</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsLessonModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                                    <X size={24} strokeWidth={3} />
+                                </button>
                             </div>
-                            <div className="grid grid-cols-2 gap-6">
-                                <div>
-                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Duração</label>
+
+                            <div className="p-10 overflow-y-auto flex-1 space-y-8 hide-scroll">
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título da Atividade *</label>
                                     <input 
-                                        className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all text-xs"
-                                        placeholder="Ex: 15 min"
-                                        value={lessonFormData.duration}
-                                        onChange={(e) => setLessonFormData({...lessonFormData, duration: e.target.value})}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all text-slate-900"
+                                        placeholder="Ex: Introdução ao Canva"
+                                        value={lessonFormData.title}
+                                        onChange={(e) => setLessonFormData({...lessonFormData, title: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">URL / Embed (YouTube/Vimeo) *</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm text-xs transition-all text-slate-900"
+                                        placeholder="Cole a URL ou código iframe"
+                                        value={lessonFormData.videoUrl}
+                                        onChange={(e) => setLessonFormData({...lessonFormData, videoUrl: e.target.value})}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Duração</label>
+                                        <input 
+                                            className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all text-slate-900"
+                                            placeholder="Ex: 15 min"
+                                            value={lessonFormData.duration}
+                                            onChange={(e) => setLessonFormData({...lessonFormData, duration: e.target.value})}
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição Breve</label>
+                                    <textarea 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all min-h-[120px] resize-none text-slate-900"
+                                        placeholder="O que será abordado?"
+                                        value={lessonFormData.description}
+                                        onChange={(e) => setLessonFormData({...lessonFormData, description: e.target.value})}
                                     />
                                 </div>
                             </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Descrição curta</label>
-                                <textarea 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all text-xs resize-none"
-                                    placeholder="O que será abordado nesta aula?"
-                                    rows={3}
-                                    value={lessonFormData.description}
-                                    onChange={(e) => setLessonFormData({...lessonFormData, description: e.target.value})}
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-12 flex gap-4">
-                            <button 
-                                onClick={() => setIsLessonModalOpen(false)} 
-                                className="flex-1 bg-slate-100 text-slate-600 py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                onClick={handleSaveLesson}
-                                disabled={lessonLoading || !lessonFormData.title}
-                                className="flex-1 bg-brand-blue text-white py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:bg-brand-blue/90 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {lessonLoading ? <Loader2 className="animate-spin" size={18} /> : <><Plus size={18} strokeWidth={3} /> Publicar Aula</>}
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
 
-        {/* Modal: Confirmação de Exclusão (Simplificado) */}
-        {lessonToDelete && (
-             <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-                <div className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm" onClick={() => setLessonToDelete(null)} />
-                <div className="bg-white max-w-sm w-full rounded-[2.5rem] p-10 relative z-10 text-center">
-                    <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                        <AlertTriangle size={32} />
+                            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center rounded-b-[3rem]">
+                                <button 
+                                    onClick={handleSaveLesson}
+                                    disabled={lessonLoading || !lessonFormData.title}
+                                    className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+                                >
+                                    {lessonLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                                    Publicar Atividade
+                                </button>
+                            </div>
+                        </motion.div>
                     </div>
-                    <h3 className="text-xl font-black text-slate-900 tracking-tight mb-4">Excluir atividade?</h3>
-                    <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed px-4">Tem certeza que deseja apagar "{lessonToDelete.title}"? Esta ação não pode ser desfeita.</p>
-                    <div className="flex gap-4">
-                        <button onClick={() => setLessonToDelete(null)} className="flex-1 py-4 bg-slate-100 text-slate-600 rounded-2xl text-[10px] font-black uppercase tracking-widest">Não</button>
-                        <button onClick={confirmDeleteLesson} className="flex-1 py-4 bg-rose-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-rose-200">{isDeleteLoading ? '...' : 'Excluir'}</button>
+                )}
+
+                {/* Modal: Confirmação de Exclusão */}
+                {lessonToDelete && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                            onClick={() => setLessonToDelete(null)}
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                            className="bg-white max-w-sm w-full rounded-[3rem] p-10 relative z-[1010] text-center shadow-2xl"
+                        >
+                            <div className="w-24 h-24 bg-rose-50 text-rose-500 rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl shadow-rose-100">
+                                <AlertTriangle size={40} />
+                            </div>
+                            <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-4">Excluir atividade?</h3>
+                            <p className="text-slate-400 text-sm font-medium mb-10 leading-relaxed px-4 italic">Esta ação não poderá ser revertida nos servidores.</p>
+                            <div className="flex gap-4">
+                                <button onClick={() => setLessonToDelete(null)} className="flex-1 py-5 bg-slate-100 text-slate-400 hover:text-slate-800 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all">Manter</button>
+                                <button onClick={confirmDeleteLesson} className="flex-1 py-5 bg-rose-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-200 transition-all active:scale-95">{isDeleteLoading ? '...' : 'Excluir'}</button>
+                            </div>
+                        </motion.div>
                     </div>
-                </div>
-             </div>
+                )}
+
+                {/* Modal: Novo Tópico Fórum */}
+                {isTopicModalOpen && (
+                    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                        <motion.div 
+                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
+                            onClick={() => setIsTopicModalOpen(false)} 
+                        />
+                        <motion.div 
+                            initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                            animate={{ scale: 1, opacity: 1, y: 0 }}
+                            exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                            className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-[1010] overflow-hidden flex flex-col max-h-[90vh]"
+                        >
+                            <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-800 relative group/topic">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                                <div className="flex items-center gap-6 relative z-10">
+                                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/topic:rotate-12 duration-500">
+                                        <MessageCircle size={32} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">Novo Tópico</h3>
+                                        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Diálogo e Partilha</p>
+                                    </div>
+                                </div>
+                                <button onClick={() => setIsTopicModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                                    <X size={24} strokeWidth={3} />
+                                </button>
+                            </div>
+
+                            <div className="p-10 overflow-y-auto flex-1 space-y-8 hide-scroll">
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Assunto / Título *</label>
+                                    <input 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all text-slate-900"
+                                        placeholder="Ex: Dúvida sobre a ferramenta X"
+                                        value={topicFormData.title}
+                                        onChange={(e) => setTopicFormData({...topicFormData, title: e.target.value})}
+                                    />
+                                </div>
+                                <div className="space-y-4">
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Sua Mensagem *</label>
+                                    <textarea 
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all min-h-[160px] resize-none text-slate-900"
+                                        placeholder="Escreva sua pergunta ou partilha aqui..."
+                                        value={topicFormData.content}
+                                        onChange={(e) => setTopicFormData({...topicFormData, content: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center rounded-b-[3rem]">
+                                <button 
+                                    onClick={() => setIsTopicModalOpen(false)} 
+                                    className="px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button 
+                                    onClick={handleCreateTopic}
+                                    disabled={forumLoading || !topicFormData.title || !topicFormData.content}
+                                    className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+                                >
+                                    {forumLoading ? <Loader2 size={18} className="animate-spin" /> : <MessageCircle size={18} />}
+                                    Publicar no Mural
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>,
+            document.body
         )}
-
-        {/* Modal: Novo Tópico Fórum */}
-        <AnimatePresence>
-            {isTopicModalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <motion.div 
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" 
-                        onClick={() => setIsTopicModalOpen(false)} 
-                    />
-                    <motion.div 
-                        initial={{ opacity: 0, scale: 0.9, y: 30 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.9, y: 30 }}
-                        className="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl relative z-10 overflow-hidden flex flex-col p-10 ring-1 ring-black/5"
-                    >
-                        <div className="flex justify-between items-center mb-8">
-                            <h3 className="text-2xl font-black text-slate-900 tracking-tight">Novo Tópico de Discussão</h3>
-                            <button onClick={() => setIsTopicModalOpen(false)} className="p-3 text-slate-400 hover:text-slate-900 bg-slate-50 rounded-xl transition-all active:scale-90"><X size={24} /></button>
-                        </div>
-                        <div className="space-y-6 flex-1">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Assunto</label>
-                                <input 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all"
-                                    placeholder="Ex: Dúvida sobre a ferramenta X"
-                                    value={topicFormData.title}
-                                    onChange={(e) => setTopicFormData({...topicFormData, title: e.target.value})}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3">Conteúdo</label>
-                                <textarea 
-                                    className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-5 outline-none focus:ring-4 focus:ring-brand-blue/10 focus:bg-white font-bold text-slate-800 transition-all text-sm resize-none"
-                                    placeholder="Escreva sua mensagem aqui..."
-                                    rows={5}
-                                    value={topicFormData.content}
-                                    onChange={(e) => setTopicFormData({...topicFormData, content: e.target.value})}
-                                />
-                            </div>
-                        </div>
-                        <div className="mt-12 flex gap-4">
-                            <button 
-                                onClick={() => setIsTopicModalOpen(false)} 
-                                className="flex-1 bg-slate-100 text-slate-600 py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all active:scale-95"
-                            >
-                                Cancelar
-                            </button>
-                            <button 
-                                onClick={handleCreateTopic}
-                                disabled={forumLoading || !topicFormData.title || !topicFormData.content}
-                                className="flex-1 bg-brand-blue text-white py-5 rounded-[1.8rem] text-[11px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:bg-brand-blue/90 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                            >
-                                {forumLoading ? <Loader2 className="animate-spin" size={18} /> : <><MessageCircle size={18} /> Publicar</>}
-                            </button>
-                        </div>
-                    </motion.div>
-                </div>
-            )}
-        </AnimatePresence>
     </div>
   );
 };

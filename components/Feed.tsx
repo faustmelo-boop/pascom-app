@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Post, User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
-import { CREDS, DECODE } from '../constants';
-import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HeartHandshake, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List, MoreVertical, Smile, Palette, MessageSquare, Shield, Copy, ExternalLink, Instagram, Facebook, Mail, Check, Eye, EyeOff } from 'lucide-react';
+import { Plus, Trash2, Loader2, X, Image as ImageIcon, BarChart2, Megaphone, HeartHandshake, BookOpen, Camera, Send, AlertTriangle, Bold, Italic, Strikethrough, List, MoreVertical, Smile, Palette, MessageSquare } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface FeedProps {
@@ -11,6 +11,7 @@ interface FeedProps {
   currentUser: User;
   onRefresh: () => void;
   isDashboardIntegrated?: boolean;
+  mode?: 'full' | 'create-only' | 'posts-only';
 }
 
 // --- Helper: Render Markdown-like Text ---
@@ -203,7 +204,14 @@ const PostCard: React.FC<{
   );
 };
 
-export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh, isDashboardIntegrated = false }) => {
+export const Feed: React.FC<FeedProps> = ({ 
+  posts, 
+  users, 
+  currentUser, 
+  onRefresh, 
+  isDashboardIntegrated = false,
+  mode = 'full'
+}) => {
   // New Post State
   const [newPostContent, setNewPostContent] = useState('');
   const [newPostType, setNewPostType] = useState<'post' | 'enquete'>('post');
@@ -222,20 +230,35 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  // Acessos Modal State
-  const [isAcessosModalOpen, setIsAcessosModalOpen] = useState(false);
-  const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [showPasswords, setShowPasswords] = useState<Record<string, boolean>>({});
-
-  const togglePassword = (field: string) => {
-    setShowPasswords(prev => ({ ...prev, [field]: !prev[field] }));
-  };
-
-  const handleCopy = (text: string, field: string) => {
-    navigator.clipboard.writeText(text);
-    setCopiedField(field);
-    setTimeout(() => setCopiedField(null), 2000);
-  };
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const isAnyModalOpen = isCreateModalOpen || !!postToDelete;
+    
+    // Alvo: o container de scroll principal no App.tsx
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    
+    if (isAnyModalOpen) {
+      document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+    }
+    
+    return () => {
+      document.body.style.overflow = '';
+      document.documentElement.style.overflow = '';
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+    };
+  }, [isCreateModalOpen, postToDelete]);
 
   const filteredPosts = posts;
 
@@ -427,92 +450,49 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
   ];
 
   return (
-    <div className={`${isDashboardIntegrated ? '' : 'max-w-4xl mx-auto p-4'} pb-20 lg:pb-8 animate-in fade-in duration-700`}>
-      {/* Animated Quick Access Icons - Dashboard Style */}
-      {!isDashboardIntegrated && (
-        <div className="flex items-center gap-4 overflow-x-auto pb-8 pt-2 hide-scroll px-2">
-          <motion.a
-          href="https://www.canva.com/folder/FAFp4SfexIc"
-          target="_blank"
-          rel="noopener noreferrer"
-          whileHover={{ y: -5, scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center gap-3 min-w-[85px] group"
-        >
-          <div className="w-16 h-16 rounded-[1.8rem] bg-white flex items-center justify-center text-brand-blue shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 group-hover:border-brand-blue/20 transition-all">
-            <Palette size={28} />
-          </div>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Canva</span>
-        </motion.a>
-
-        <motion.a
-          href="https://chatgpt.com/g/g-68419bbfb07c819188a4f51c99fc8fef-pascom-diocese-de-santa-luzia"
-          target="_blank"
-          rel="noopener noreferrer"
-          whileHover={{ y: -5, scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center gap-3 min-w-[85px] group"
-        >
-          <div className="w-16 h-16 rounded-[1.8rem] bg-slate-900 flex items-center justify-center text-white shadow-[0_8px_30px_rgb(0,0,0,0.1)] group-hover:bg-slate-800 transition-all">
-            <MessageSquare size={28} />
-          </div>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">AI Copy</span>
-        </motion.a>
-
-        <motion.button
-          onClick={() => setIsAcessosModalOpen(true)}
-          whileHover={{ y: -5, scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex flex-col items-center gap-3 min-w-[85px] group"
-        >
-          <div className="w-16 h-16 rounded-[1.8rem] bg-white flex items-center justify-center text-brand-green shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 group-hover:border-brand-green/20 transition-all">
-            <Shield size={28} />
-          </div>
-          <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest group-hover:text-slate-900 transition-colors">Acessos</span>
-        </motion.button>
-      </div>
-      )}
-
+    <div className={`${isDashboardIntegrated ? 'pb-2' : 'max-w-4xl mx-auto p-4 pb-20 lg:pb-8'} animate-in fade-in duration-700`}>
       {/* Main Feed Column */}
-      <div className="space-y-8">
+      <div className={isDashboardIntegrated ? 'space-y-4' : 'space-y-8'}>
         
-        {/* Bento Create Post Input - Fake Input */}
-        <div className="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-12px_rgba(0,0,0,0.06)] border border-slate-50 overflow-hidden mb-10 group transition-all duration-500 relative z-10">
-          <div className="p-5 sm:p-8">
-            <div className="flex gap-4 sm:gap-6 items-center">
-              <div className="shrink-0">
-                <img src={currentUser.avatar} alt="Me" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover shadow-xl shadow-slate-100 border-2 border-white" />
-              </div>
-              <button 
-                onClick={() => setIsCreateModalOpen(true)}
-                className="flex-1 bg-slate-50 hover:bg-slate-100 rounded-[1.8rem] px-6 py-4 text-left transition-all group/btn border border-slate-100"
-              >
-                <span className="text-slate-400 text-sm sm:text-base font-medium group-hover/btn:text-slate-600">
-                  Olá {currentUser.name.split(' ')[0]}, o que deseja partilhar hoje?
-                </span>
-              </button>
-              <div className="hidden sm:flex items-center gap-2">
+        {/* Bento Create Post Input - Blue Theme */}
+        {(mode === 'full' || mode === 'create-only') && (
+          <div className={`bg-brand-blue rounded-[3rem] shadow-[0_32px_64px_-12px_rgba(0,124,186,0.3)] border border-white/10 overflow-hidden ${isDashboardIntegrated ? 'mb-0' : 'mb-10'} group transition-all duration-700 relative z-10`}>
+            <div className="p-5 sm:p-8">
+              <div className="flex gap-4 sm:gap-6 items-center">
+                <div className="shrink-0">
+                  <img src={currentUser.avatar} alt="Me" className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl object-cover shadow-2xl shadow-black/20 border-2 border-white" />
+                </div>
                 <button 
-                  onClick={() => { setNewPostType('post'); setIsCreateModalOpen(true); }}
-                  className="p-3 bg-brand-blue/10 text-brand-blue rounded-xl hover:scale-110 active:scale-95 transition-all"
-                  title="Publicar"
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="flex-1 bg-white/10 hover:bg-white/20 rounded-[1.8rem] px-6 py-4 text-left transition-all group/btn border border-white/5"
                 >
-                  <MessageSquare size={20} />
+                  <span className="text-white/70 text-sm sm:text-base font-medium group-hover/btn:text-white transition-colors">
+                    Olá {currentUser.name.split(' ')[0]}, o que deseja partilhar hoje?
+                  </span>
                 </button>
-                <button 
-                  onClick={() => { setNewPostType('enquete'); setIsCreateModalOpen(true); }}
-                  className="p-3 bg-brand-yellow/10 text-brand-yellow rounded-xl hover:scale-110 active:scale-95 transition-all"
-                  title="Enquete"
-                >
-                  <BarChart2 size={20} />
-                </button>
+                <div className="hidden sm:flex items-center gap-2">
+                  <button 
+                    onClick={() => { setNewPostType('post'); setIsCreateModalOpen(true); }}
+                    className="p-3 bg-white/10 text-white rounded-xl hover:bg-white hover:text-brand-blue hover:scale-110 active:scale-95 transition-all shadow-lg"
+                    title="Publicar"
+                  >
+                    <MessageSquare size={20} />
+                  </button>
+                  <button 
+                    onClick={() => { setNewPostType('enquete'); setIsCreateModalOpen(true); }}
+                    className="p-3 bg-white text-brand-yellow rounded-xl hover:scale-110 active:scale-95 transition-all shadow-lg"
+                    title="Enquete"
+                  >
+                    <BarChart2 size={20} />
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {filteredPosts.length === 0 ? (
-            <div className="text-center py-32 bg-white rounded-[2.5rem] border border-slate-50 shadow-sm animate-in zoom-in-95 duration-700">
+        {(mode === 'full' || mode === 'posts-only') && filteredPosts.length === 0 ? (
+            <div className={`text-center py-32 bg-white rounded-[2.5rem] border border-slate-50 shadow-sm animate-in zoom-in-95 duration-700 ${isDashboardIntegrated ? 'py-12' : 'py-32'}`}>
                 <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
                     <MessageSquare size={40} className="text-slate-200" />
                 </div>
@@ -520,7 +500,8 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
                 <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Ainda não há mensagens por aqui. Que tal ser o primeiro a partilhar algo?</p>
             </div>
         ) : (
-            <div className="space-y-8 pb-12">
+          <>
+            <div className={`${isDashboardIntegrated ? 'space-y-4 pb-2' : 'space-y-8 pb-12'}`}>
               {filteredPosts.map((post) => (
                 <PostCard 
                     key={post.id} 
@@ -532,352 +513,195 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
                 />
               ))}
             </div>
-        )}
-      </div>
-
-      {/* NEW POST MODAL */}
-      <AnimatePresence>
-        {isCreateModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsCreateModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
-            >
-              <div className="p-8 border-b border-slate-50 flex items-center justify-between">
-                <div>
-                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">Nova Mensagem</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Comunicando com amor</p>
-                </div>
-                <button
-                  onClick={() => setIsCreateModalOpen(false)}
-                  className="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-2xl transition-all"
-                >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="p-8 overflow-y-auto space-y-6 custom-scrollbar">
-                <div className="flex gap-4 items-start">
-                    <img src={currentUser.avatar} alt="Me" className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white shrink-0" />
-                    <div className="flex-1 w-full space-y-4">
-                        <div className="relative bg-slate-50 rounded-[1.8rem] p-5 ring-1 ring-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-blue/10 transition-all">
-                            <textarea
-                                ref={textareaRef}
-                                autoFocus
-                                value={newPostContent}
-                                onChange={(e) => setNewPostContent(e.target.value)}
-                                placeholder={`O que quer compartilhar hoje, ${currentUser.name.split(' ')[0]}?`}
-                                className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 text-lg font-medium resize-none focus:outline-none min-h-[120px] py-1 scrollbar-hide focus:ring-0"
-                            />
-                            
-                            <div className="flex items-center gap-1 mt-2 border-t border-slate-100 pt-3">
-                                <button onClick={() => handleFormatText('bold')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Negrito"><Bold size={16} /></button>
-                                <button onClick={() => handleFormatText('italic')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Itálico"><Italic size={16} /></button>
-                                <button onClick={() => handleFormatText('list')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Lista"><List size={16} /></button>
-                            </div>
-                        </div>
-                        
-                        {imagePreview && (
-                            <motion.div 
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="relative inline-block group/img"
-                            >
-                                <img src={imagePreview} alt="Preview" className="h-48 w-auto rounded-[2rem] object-cover border-4 border-white shadow-xl" />
-                                <button onClick={removeImage} className="absolute -top-3 -right-3 bg-slate-900 text-white rounded-full p-2 shadow-xl hover:scale-110 active:scale-90 transition-all font-black"><X size={14} /></button>
-                            </motion.div>
-                        )}
-
-                        <AnimatePresence>
-                            {newPostType === 'enquete' && (
-                                <motion.div 
-                                    initial={{ height: 0, opacity: 0 }}
-                                    animate={{ height: 'auto', opacity: 1 }}
-                                    exit={{ height: 0, opacity: 0 }}
-                                    className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner relative overflow-hidden"
-                                >
-                                    <div className="flex items-center justify-between mb-2">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opções da Enquete</p>
-                                        <button onClick={() => setNewPostType('post')} className="text-slate-300 hover:text-rose-500 transition-colors"><X size={16}/></button>
-                                    </div>
-                                    {pollOptions.map((opt, idx) => (
-                                        <div key={idx} className="flex gap-3 items-center">
-                                            <input 
-                                                type="text" 
-                                                value={opt} 
-                                                onChange={(e) => handlePollOptionChange(idx, e.target.value)} 
-                                                placeholder={`Opção ${idx + 1}`} 
-                                                className="flex-1 text-sm py-3.5 px-5 bg-white text-slate-900 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/10 transition-all font-bold shadow-sm" 
-                                            />
-                                            {pollOptions.length > 2 && (
-                                                <button onClick={() => handleRemovePollOption(idx)} className="text-slate-300 hover:text-rose-500 p-2">
-                                                    <Trash2 size={16} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    ))}
-                                    <button onClick={handleAddPollOption} className="text-[10px] text-brand-blue font-black uppercase tracking-widest opacity-80 flex items-center gap-2 mt-2 px-2 transition-all">
-                                        <Plus size={12} strokeWidth={3} /> Adicionar Opção
-                                    </button>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </div>
-              </div>
-
-              <div className="p-8 bg-slate-50/50 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
-                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
-                    <button 
-                        onClick={() => fileInputRef.current?.click()} 
-                        className={`p-4 rounded-2xl transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest ${selectedImage ? 'bg-brand-green text-white' : 'bg-white text-slate-400 hover:text-brand-green border border-slate-100 shadow-sm'}`}
-                    >
-                        <Camera size={18} />
-                        {selectedImage ? 'Alterar Foto' : 'Adicionar Foto'}
-                    </button>
-
-                    <button 
-                        onClick={() => setNewPostType(newPostType === 'enquete' ? 'post' : 'enquete')}
-                        className={`p-4 rounded-2xl transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest ${newPostType === 'enquete' ? 'bg-brand-yellow text-slate-900' : 'bg-white text-slate-400 hover:text-brand-yellow border border-slate-100 shadow-sm'}`}
-                    >
-                        <BarChart2 size={18} />
-                        {newPostType === 'enquete' ? 'Remover Enquete' : 'Criar Enquete'}
-                    </button>
-                 </div>
-
-                 <button 
-                    onClick={async () => {
-                        await handleSubmit();
-                        setIsCreateModalOpen(false);
-                    }} 
-                    disabled={isSubmitting || (!newPostContent.trim() && !selectedImage)} 
-                    className="w-full sm:w-auto bg-slate-900 text-white py-4 px-10 rounded-2xl hover:bg-brand-blue active:scale-95 transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-slate-200"
-                >
-                    {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} 
-                    <span>Partilhar agora</span>
-                 </button>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* CONFIRM DELETE MODAL */}
-      {postToDelete && (
-          <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full text-center">
-                  <div className="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <AlertTriangle size={28} />
+            {/* NEW POST MODAL */}
+            {createPortal(
+              <AnimatePresence>
+                {isCreateModalOpen && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 md:p-6">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsCreateModalOpen(false)}
+                className="absolute inset-0 bg-slate-950/80 backdrop-blur-xl"
+              />
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                className="relative bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] z-[100000]"
+              >
+                <div className="p-8 md:p-10 border-b border-slate-50 flex items-center justify-between">
+                  <div>
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight">Nova Mensagem</h3>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Comunicando com amor</p>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-900 mb-2">Excluir Publicação?</h3>
-                  <p className="text-sm text-slate-500 mb-6 leading-relaxed">Esta ação não pode ser desfeita. A publicação será removida permanentemente do feed.</p>
-                  
-                  <div className="flex gap-3">
+                  <button
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="p-3 bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-2xl transition-all"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="p-8 md:p-10 overflow-y-auto space-y-6 custom-scrollbar flex-1">
+                  <div className="flex gap-4 items-start">
+                      <img src={currentUser.avatar} alt="Me" className="w-12 h-12 rounded-2xl object-cover shadow-lg border-2 border-white shrink-0" />
+                      <div className="flex-1 w-full space-y-4">
+                          <div className="relative bg-slate-50 rounded-[1.8rem] p-5 ring-1 ring-slate-100 focus-within:bg-white focus-within:ring-2 focus-within:ring-brand-blue/10 transition-all">
+                              <textarea
+                                  ref={textareaRef}
+                                  autoFocus
+                                  value={newPostContent}
+                                  onChange={(e) => setNewPostContent(e.target.value)}
+                                  placeholder={`O que quer compartilhar hoje, ${currentUser.name.split(' ')[0]}?`}
+                                  className="w-full bg-transparent text-slate-800 placeholder:text-slate-400 text-lg font-medium resize-none focus:outline-none min-h-[120px] py-1 scrollbar-hide focus:ring-0"
+                              />
+                              
+                              <div className="flex items-center gap-1 mt-2 border-t border-slate-100 pt-3">
+                                  <button onClick={() => handleFormatText('bold')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Negrito"><Bold size={16} /></button>
+                                  <button onClick={() => handleFormatText('italic')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Itálico"><Italic size={16} /></button>
+                                  <button onClick={() => handleFormatText('list')} className="p-2 text-slate-400 hover:text-slate-900 rounded-lg hover:bg-white transition-all" title="Lista"><List size={16} /></button>
+                              </div>
+                          </div>
+                          
+                          {imagePreview && (
+                              <motion.div 
+                                  initial={{ opacity: 0, scale: 0.9 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  className="relative inline-block group/img"
+                              >
+                                  <img src={imagePreview} alt="Preview" className="h-48 w-auto rounded-[2rem] object-cover border-4 border-white shadow-xl" />
+                                  <button onClick={removeImage} className="absolute -top-3 -right-3 bg-slate-900 text-white rounded-full p-2 shadow-xl hover:scale-110 active:scale-90 transition-all font-black"><X size={14} /></button>
+                              </motion.div>
+                          )}
+
+                          <AnimatePresence>
+                              {newPostType === 'enquete' && (
+                                  <motion.div 
+                                      initial={{ height: 0, opacity: 0 }}
+                                      animate={{ height: 'auto', opacity: 1 }}
+                                      exit={{ height: 0, opacity: 0 }}
+                                      className="space-y-4 bg-slate-50 p-6 rounded-[2rem] border border-slate-100 shadow-inner relative overflow-hidden"
+                                  >
+                                      <div className="flex items-center justify-between mb-2">
+                                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Opções da Enquete</p>
+                                          <button onClick={() => setNewPostType('post')} className="text-slate-300 hover:text-rose-500 transition-colors"><X size={16}/></button>
+                                      </div>
+                                      {pollOptions.map((opt, idx) => (
+                                          <div key={idx} className="flex gap-3 items-center">
+                                              <input 
+                                                  type="text" 
+                                                  value={opt} 
+                                                  onChange={(e) => handlePollOptionChange(idx, e.target.value)} 
+                                                  placeholder={`Opção ${idx + 1}`} 
+                                                  className="flex-1 text-sm py-3.5 px-5 bg-white text-slate-900 border border-slate-100 rounded-xl focus:outline-none focus:ring-2 focus:ring-brand-blue/10 transition-all font-bold shadow-sm" 
+                                              />
+                                              {pollOptions.length > 2 && (
+                                                  <button onClick={() => handleRemovePollOption(idx)} className="text-slate-300 hover:text-rose-500 p-2">
+                                                      <Trash2 size={16} />
+                                                  </button>
+                                              )}
+                                          </div>
+                                      ))}
+                                      <button onClick={handleAddPollOption} className="text-[10px] text-brand-blue font-black uppercase tracking-widest opacity-80 flex items-center gap-2 mt-2 px-2 transition-all">
+                                          <Plus size={12} strokeWidth={3} /> Adicionar Opção
+                                      </button>
+                                  </motion.div>
+                              )}
+                          </AnimatePresence>
+                      </div>
+                  </div>
+                </div>
+
+                <div className="p-8 md:p-10 bg-slate-50/50 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
+                  <div className="flex items-center gap-3 w-full sm:w-auto">
+                      <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageSelect} />
                       <button 
-                        onClick={() => setPostToDelete(null)} 
-                        className="flex-1 py-3 text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl font-semibold transition-colors"
-                        disabled={isDeleting}
+                          onClick={() => fileInputRef.current?.click()} 
+                          className={`p-4 rounded-2xl transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest ${selectedImage ? 'bg-brand-green text-white' : 'bg-white text-slate-400 hover:text-brand-green border border-slate-100 shadow-sm'}`}
                       >
-                          Cancelar
+                          <Camera size={18} />
+                          {selectedImage ? 'Alterar Foto' : 'Adicionar Foto'}
                       </button>
+
                       <button 
-                        onClick={handleConfirmDelete}
-                        disabled={isDeleting}
-                        className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl font-semibold transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                          onClick={() => setNewPostType(newPostType === 'enquete' ? 'post' : 'enquete')}
+                          className={`p-4 rounded-2xl transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest ${newPostType === 'enquete' ? 'bg-brand-yellow text-slate-900' : 'bg-white text-slate-400 hover:text-brand-yellow border border-slate-100 shadow-sm'}`}
                       >
-                          {isDeleting && <Loader2 size={18} className="animate-spin" />}
-                          Excluir
+                          <BarChart2 size={18} />
+                          {newPostType === 'enquete' ? 'Remover Enquete' : 'Criar Enquete'}
                       </button>
                   </div>
-              </div>
-          </div>
+
+                  <button 
+                      onClick={async () => {
+                          await handleSubmit();
+                      }} 
+                      disabled={isSubmitting || (!newPostContent.trim() && !selectedImage)} 
+                      className="w-full sm:w-auto bg-slate-900 text-white py-4 px-10 rounded-2xl hover:bg-brand-blue active:scale-95 transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-slate-200"
+                  >
+                      {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} 
+                      <span>Partilhar agora</span>
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
-      {/* ACESSOS MODAL */}
-      <AnimatePresence>
-        {isAcessosModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsAcessosModalOpen(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
-            />
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0, y: 20 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative bg-white w-full max-w-md rounded-3xl shadow-2xl overflow-hidden"
-            >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-brand-green/10 text-brand-green flex items-center justify-center">
-                    <Shield size={20} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900">Acessos Pascom</h3>
-                    <p className="text-xs text-slate-500">Credenciais das redes sociais</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setIsAcessosModalOpen(false)}
-                  className="p-2 hover:bg-slate-200 rounded-full text-slate-400 transition-colors"
+      {/* CONFIRM DELETE MODAL */}
+      {createPortal(
+        <AnimatePresence>
+          {postToDelete && (
+            <div className="fixed inset-0 z-[99999] flex items-center justify-center p-6">
+                <motion.div 
+                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
+                    onClick={() => setPostToDelete(null)}
+                />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-[100000]"
                 >
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-6">
-                {/* Email / Drive */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-                      <Mail size={16} className="text-brand-blue" />
-                      <span>E-mail / Google Drive</span>
+                    <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[1.8rem] flex items-center justify-center mx-auto mb-6 shadow-inner ring-8 ring-rose-50/50">
+                        <AlertTriangle size={32} />
                     </div>
-                    <a
-                      href={`https://accounts.google.com/AccountChooser?service=mail&continue=https://mail.google.com/mail/&Email=${DECODE(CREDS.EMAIL)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-brand-blue hover:underline flex items-center gap-1"
-                    >
-                      Acessar <ExternalLink size={10} />
-                    </a>
-                  </div>
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Login</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.EMAIL)}</span>
-                        <button onClick={() => handleCopy(DECODE(CREDS.EMAIL), 'email-login')} className="text-slate-400 hover:text-brand-blue transition-colors">
-                          {copiedField === 'email-login' ? <Check size={14} className="text-brand-green" /> : <Copy size={14} />}
+                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-2">Excluir Publicação?</h3>
+                    <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed italic">Esta ação não pode ser desfeita. A publicação será removida permanentemente do feed.</p>
+                    
+                    <div className="flex gap-4">
+                        <button 
+                          onClick={() => setPostToDelete(null)} 
+                          className="flex-1 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all"
+                          disabled={isDeleting}
+                        >
+                            Cancelar
                         </button>
-                      </div>
-                    </div>
-                    <div className="pt-3 border-t border-slate-200/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-mono font-medium text-slate-700">
-                          {showPasswords['email-pass'] ? DECODE(CREDS.PASS_MAIN) : '••••••••••••'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => togglePassword('email-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                            {showPasswords['email-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-                          <button onClick={() => handleCopy(DECODE(CREDS.PASS_MAIN), 'email-pass')} className="text-slate-400 hover:text-brand-blue transition-colors">
-                            {copiedField === 'email-pass' ? <Check size={14} className="text-brand-green" /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Instagram */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-                      <Instagram size={16} className="text-pink-500" />
-                      <span>Instagram</span>
-                    </div>
-                    <a
-                      href={`https://www.instagram.com/${DECODE(CREDS.IG_USER).replace('@', '')}/`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      Acessar <ExternalLink size={10} />
-                    </a>
-                  </div>
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Usuário</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.IG_USER)}</span>
-                        <button onClick={() => handleCopy(DECODE(CREDS.IG_USER), 'ig-login')} className="text-slate-400 hover:text-brand-blue transition-colors">
-                          {copiedField === 'ig-login' ? <Check size={14} className="text-brand-green" /> : <Copy size={14} />}
+                        <button 
+                          onClick={handleConfirmDelete}
+                          disabled={isDeleting}
+                          className="flex-[2] py-5 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all shadow-xl shadow-rose-200 flex items-center justify-center gap-3"
+                        >
+                            {isDeleting ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />}
+                            Excluir
                         </button>
-                      </div>
                     </div>
-                    <div className="pt-3 border-t border-slate-200/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-mono font-medium text-slate-700">
-                          {showPasswords['ig-pass'] ? DECODE(CREDS.IG_PASS) : '••••••••••••'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => togglePassword('ig-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                            {showPasswords['ig-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-                          <button onClick={() => handleCopy(DECODE(CREDS.IG_PASS), 'ig-pass')} className="text-slate-400 hover:text-brand-blue transition-colors">
-                            {copiedField === 'ig-pass' ? <Check size={14} className="text-brand-green" /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                </motion.div>
+            </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
-                {/* Facebook */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-                      <Facebook size={16} className="text-blue-700" />
-                      <span>Facebook</span>
-                    </div>
-                    <a
-                      href="https://www.facebook.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[10px] font-bold text-blue-600 hover:underline flex items-center gap-1"
-                    >
-                      Acessar <ExternalLink size={10} />
-                    </a>
-                  </div>
-                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-3">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Login</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-slate-700">{DECODE(CREDS.EMAIL)}</span>
-                        <button onClick={() => handleCopy(DECODE(CREDS.EMAIL), 'fb-login')} className="text-slate-400 hover:text-blue-600 transition-colors">
-                          {copiedField === 'fb-login' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                        </button>
-                      </div>
-                    </div>
-                    <div className="pt-3 border-t border-slate-200/60">
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Senha</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-mono font-medium text-slate-700">
-                          {showPasswords['fb-pass'] ? DECODE(CREDS.PASS_MAIN) : '••••••••••••'}
-                        </span>
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => togglePassword('fb-pass')} className="text-slate-400 hover:text-slate-600 transition-colors">
-                            {showPasswords['fb-pass'] ? <EyeOff size={14} /> : <Eye size={14} />}
-                          </button>
-                          <button onClick={() => handleCopy(DECODE(CREDS.PASS_MAIN), 'fb-pass')} className="text-slate-400 hover:text-blue-600 transition-colors">
-                            {copiedField === 'fb-pass' ? <Check size={14} className="text-emerald-500" /> : <Copy size={14} />}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-          </div>
+      {/* MODALS SECTION */}
+          </>
         )}
-      </AnimatePresence>
+      </div>
     </div>
   );
 };

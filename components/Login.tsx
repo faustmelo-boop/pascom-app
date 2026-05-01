@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../supabaseClient';
-import { Loader2, Check, ArrowLeft, UserPlus, KeyRound, Mail, ShieldCheck, ChevronRight, AlertTriangle, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { Loader2, Check, ArrowLeft, UserPlus, KeyRound, Mail, ChevronRight, AlertTriangle, Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { UserRole } from '../types';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -152,13 +152,13 @@ export const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#f8fafc] flex items-center justify-center font-sans overflow-y-auto">
+    <div className="min-h-screen w-full bg-[#f8fafc] flex items-center justify-center font-sans overflow-hidden p-0 lg:p-4">
       
-      {/* Container simulating a refined mobile-first layout or device mockup on large screens */}
-      <div className="w-full max-w-[440px] min-h-screen lg:min-h-[850px] bg-white shadow-2xl lg:rounded-[3rem] overflow-hidden relative flex flex-col">
+      {/* Container split for desktop, single column for mobile */}
+      <div className="w-full max-w-full lg:max-w-6xl min-h-screen lg:min-h-0 lg:h-[750px] bg-white shadow-2xl lg:rounded-[3rem] overflow-hidden relative flex flex-col lg:flex-row transition-all duration-700">
         
-        {/* TOPOGRAPHIC HEADER */}
-        <div className={`relative ${view === 'welcome' ? 'h-[240px]' : 'h-[160px]'} w-full overflow-hidden shrink-0 transition-all duration-500`}>
+        {/* BRANDING SIDEBAR (Desktop) / TOPOGRAPHIC HEADER (Mobile) */}
+        <div className={`relative ${view === 'welcome' ? 'h-[30vh] lg:h-full' : 'h-[160px] lg:h-full'} w-full lg:w-5/12 shrink-0 transition-all duration-500 overflow-hidden`}>
           <div className="absolute inset-0 bg-gradient-to-br from-[#007cba] via-[#007cba] to-[#6cc04a]">
             {/* Topographic Lines SVG Overlay */}
             <svg className="absolute inset-0 w-full h-full opacity-20" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
@@ -184,20 +184,47 @@ export const Login: React.FC = () => {
             </svg>
           </div>
 
-          {/* Botão Voltar (Apenas em telas secundárias) */}
+          {/* Desktop Branding Content */}
+          <div className="hidden lg:flex absolute inset-0 flex-col items-center justify-center p-12 text-center text-white">
+            <motion.img 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              src="https://i.imgur.com/ofoiwCd.png" 
+              alt="Pascom Tasks" 
+              className="h-32 w-auto mb-8 filter brightness-0 invert"
+            />
+            <motion.h2 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-4xl font-black tracking-tighter"
+            >
+              Pascom Tasks
+            </motion.h2>
+            <motion.p 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+              className="text-white/80 font-medium text-lg mt-4 max-w-xs leading-relaxed"
+            >
+              Organize suas atividades pastorais com clareza e propósito.
+            </motion.p>
+          </div>
+
+          {/* Botão Voltar (Apenas em telas secundárias - Mobile) */}
           {view !== 'welcome' && (
             <motion.button 
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
               onClick={() => setView('welcome')}
-              className="absolute top-8 left-6 z-20 flex items-center gap-2 text-white/90 font-black text-[10px] uppercase tracking-widest bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all"
+              className="absolute top-8 left-6 z-20 flex items-center gap-2 text-white/90 font-black text-[10px] uppercase tracking-widest bg-white/10 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all lg:hidden"
             >
               <ArrowLeft size={14} /> Voltar
             </motion.button>
           )}
 
-          {/* Wave Transition */}
-          <div className="absolute bottom-[-2px] left-0 right-0">
+          {/* Wave Transition (Mobile Only) */}
+          <div className="absolute bottom-[-2px] left-0 right-0 lg:hidden">
             <svg viewBox="0 0 400 120" fill="white" xmlns="http://www.w3.org/2000/svg">
               <path d="M0,60 C100,20 300,100 400,60 V120 H0 V60Z" />
             </svg>
@@ -205,7 +232,20 @@ export const Login: React.FC = () => {
         </div>
 
         {/* CONTENT AREA */}
-        <div className="flex-1 px-10 pb-12 pt-4 flex flex-col">
+        <div className="flex-1 px-6 sm:px-10 lg:px-16 pt-8 pb-12 flex flex-col justify-center bg-white overflow-y-auto hide-scroll relative">
+          
+          {/* Desktop Navigation Back button */}
+          {view !== 'welcome' && (
+             <motion.button 
+               initial={{ opacity: 0 }}
+               animate={{ opacity: 1 }}
+               onClick={() => setView('welcome')}
+               className="hidden lg:flex absolute top-10 left-10 items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-brand-blue transition-all"
+             >
+               <ArrowLeft size={16} /> Voltar para o início
+             </motion.button>
+          )}
+
           <AnimatePresence mode="wait">
             
             {/* VIEW: WELCOME */}
@@ -215,17 +255,24 @@ export const Login: React.FC = () => {
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
-                className="flex-1 flex flex-col items-center justify-center text-center gap-2"
+                className="flex-1 flex flex-col items-center justify-center text-center gap-2 lg:max-w-md lg:mx-auto w-full"
               >
-                <motion.img 
-                  initial={{ y: -10, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  src="https://i.imgur.com/ofoiwCd.png" 
-                  alt="Pascom Tasks" 
-                  className="h-20 w-auto mb-6 object-contain"
-                />
+                <div className="lg:hidden">
+                    <motion.img 
+                        initial={{ y: -10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        src="https://i.imgur.com/ofoiwCd.png" 
+                        alt="Pascom Tasks" 
+                        className="h-20 w-auto mb-6 object-contain"
+                    />
+                </div>
                 
-                <div className="mt-10 w-full flex flex-col gap-4">
+                <div className="hidden lg:block text-left w-full mb-12">
+                    <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">O serviço nos une, <br/>o propósito nos guia.</h1>
+                    <p className="text-slate-400 font-bold text-xs mt-6 uppercase tracking-[0.2em] italic">Selecione uma opção para começar</p>
+                </div>
+                
+                <div className="mt-4 lg:mt-0 w-full flex flex-col gap-4">
                    <button 
                     onClick={() => setView('login')}
                     className="w-full bg-brand-blue text-white py-5 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-3"

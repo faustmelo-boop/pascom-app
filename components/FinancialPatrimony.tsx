@@ -1,9 +1,11 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   DollarSign, TrendingUp, TrendingDown, ArrowLeftRight, 
   PieChart, FileText, Plus, Filter, AlertTriangle, 
   ChevronRight, Wallet, Tag, Briefcase, Calendar,
-  MoreHorizontal, Download, Trash2, Edit2, CheckCircle2, XCircle, Clock
+  MoreHorizontal, Download, Trash2, Edit2, CheckCircle2, XCircle, Clock, X, Save, Loader2
 } from 'lucide-react';
 import { 
   FinancialAccount, FinancialCategory, FinancialProject, 
@@ -75,6 +77,31 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
   });
 
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    const isAnyModalOpen = isAddingTransaction || isAddingAccount || isAddingProject || isAddingCategory;
+    
+    if (isAnyModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isAddingTransaction, isAddingAccount, isAddingProject, isAddingCategory]);
 
   // Permissions
   const isAdmin = isCoordinator(currentUser.role);
@@ -485,7 +512,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
         <style>
           body { font-family: sans-serif; color: #333; padding: 40px; }
           .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
-          .logo { font-size: 24px; font-weight: bold; color: #2563eb; }
+          .logo { font-size: 24px; font-weight: bold; color: #007cba; }
           .meta { text-align: right; font-size: 12px; color: #666; }
           h1 { font-size: 20px; margin-bottom: 20px; }
           .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 40px; }
@@ -588,7 +615,7 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
   return (
     <div className="flex flex-col h-full bg-slate-50">
       {/* Header */}
-      <div className="px-8 py-6 bg-white border-b border-slate-200">
+      <div className="px-4 md:px-8 py-4 md:py-6 bg-white border-b border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Nossos Recursos</h1>
@@ -1190,319 +1217,406 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
         )}
       </div>
 
-      {/* Modals */}
-      {isAddingTransaction && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAddingTransaction(false)} />
-          <div className="relative bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="font-bold text-slate-900">{editingId ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
-              <button 
-                onClick={() => { setIsAddingTransaction(false); resetTransactionForm(); }} 
-                className="text-slate-400 hover:text-slate-600"
+      {/* PORTALED MODALS */}
+      {createPortal(
+        <AnimatePresence>
+          {/* TRANSACTION MODAL */}
+          {isAddingTransaction && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => { setIsAddingTransaction(false); resetTransactionForm(); }}
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] w-full max-w-xl shadow-2xl flex flex-col max-h-[90vh] overflow-hidden relative z-[1010]"
               >
-                <XCircle size={20} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div className="flex p-1 bg-slate-100 rounded-xl">
-                <button 
-                  onClick={() => setTransactionForm(prev => ({ ...prev, type: FinancialTransactionType.EXPENSE }))}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${transactionForm.type === FinancialTransactionType.EXPENSE ? 'bg-white text-red-600 shadow-sm' : 'text-slate-500'}`}
-                >
-                  Saída
-                </button>
-                <button 
-                  onClick={() => setTransactionForm(prev => ({ ...prev, type: FinancialTransactionType.INCOME }))}
-                  className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${transactionForm.type === FinancialTransactionType.INCOME ? 'bg-white text-brand-green shadow-sm' : 'text-slate-500'}`}
-                >
-                  Entrada
-                </button>
-              </div>
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative group/trans">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/trans:rotate-12 duration-500">
+                      <ArrowLeftRight size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">{editingId ? 'Editar Lançamento' : 'Novo Lançamento'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Fluxo de Caixa</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setIsAddingTransaction(false); resetTransactionForm(); }} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={24} strokeWidth={3} />
+                  </button>
+                </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descrição *</label>
-                  <input 
-                    type="text" 
-                    value={transactionForm.description}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                    placeholder="Ex: Compra de cabos XLR" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Valor (R$) *</label>
-                  <input 
-                    type="number" 
-                    value={transactionForm.value}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, value: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/20" 
-                    placeholder="0,00" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Data *</label>
-                  <input 
-                    type="date" 
-                    value={transactionForm.date}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, date: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Conta *</label>
-                  <select 
-                    value={transactionForm.accountId}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, accountId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                  >
-                    <option value="">Selecionar...</option>
-                    {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Categoria</label>
-                  <select 
-                    value={transactionForm.categoryId}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, categoryId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                  >
-                    <option value="">Selecionar...</option>
-                    {categories.filter(c => c.type === (transactionForm.type === FinancialTransactionType.INCOME ? 'Entrada' : 'Saída')).map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Projeto</label>
-                  <select 
-                    value={transactionForm.projectId}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, projectId: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                  >
-                    <option value="">Nenhum</option>
-                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Forma de Pagamento</label>
-                  <select 
-                    value={transactionForm.paymentMethod}
-                    onChange={(e) => setTransactionForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                  >
-                    <option value="PIX">PIX</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão de Crédito">Cartão de Crédito</option>
-                    <option value="Cartão de Débito">Cartão de Débito</option>
-                    <option value="Transferência">Transferência</option>
-                    <option value="Boleto">Boleto</option>
-                  </select>
-                </div>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button 
-                  onClick={() => { setIsAddingTransaction(false); resetTransactionForm(); }} 
-                  className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleSaveTransaction}
-                  disabled={loading}
-                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Salvar Lançamento'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="p-10 overflow-y-auto flex-1 space-y-8 hide-scroll">
+                  <div className="flex p-2 bg-slate-50 rounded-[1.5rem] border border-slate-100">
+                    <button 
+                      onClick={() => setTransactionForm(prev => ({ ...prev, type: FinancialTransactionType.EXPENSE }))}
+                      className={`flex-1 py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${transactionForm.type === FinancialTransactionType.EXPENSE ? 'bg-white text-rose-500 shadow-md ring-1 ring-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <TrendingDown size={16} /> Saída
+                      </div>
+                    </button>
+                    <button 
+                      onClick={() => setTransactionForm(prev => ({ ...prev, type: FinancialTransactionType.INCOME }))}
+                      className={`flex-1 py-4 text-xs font-black uppercase tracking-widest rounded-xl transition-all ${transactionForm.type === FinancialTransactionType.INCOME ? 'bg-white text-brand-green shadow-md ring-1 ring-slate-100' : 'text-slate-400 hover:text-slate-600'}`}
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <TrendingUp size={16} /> Entrada
+                      </div>
+                    </button>
+                  </div>
 
-      {isAddingAccount && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAddingAccount(false)} />
-          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="font-bold text-slate-900">{editingId ? 'Editar Conta' : 'Nova Conta'}</h3>
-              <button 
-                onClick={() => { setIsAddingAccount(false); setEditingId(null); }} 
-                className="text-slate-400 hover:text-slate-600"
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <div className="sm:col-span-2 space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição do Lançamento *</label>
+                      <input 
+                        type="text" 
+                        value={transactionForm.description}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, description: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                        placeholder="Ex: Oferta das Comunidades" 
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Valor do Repasse (R$) *</label>
+                      <input 
+                        type="number" 
+                        value={transactionForm.value}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, value: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                        placeholder="0,00" 
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Data da Operação *</label>
+                      <input 
+                        type="date" 
+                        value={transactionForm.date}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, date: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Conta de Origem/Destino *</label>
+                      <select 
+                        value={transactionForm.accountId}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, accountId: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                      >
+                        <option value="">Selecionar...</option>
+                        {accounts.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Categoria de Fluxo</label>
+                      <select 
+                        value={transactionForm.categoryId}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, categoryId: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                      >
+                        <option value="">Selecionar...</option>
+                        {categories.filter(c => c.type === (transactionForm.type === FinancialTransactionType.INCOME ? 'Entrada' : 'Saída')).map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Projeto Vinculado</label>
+                      <select 
+                        value={transactionForm.projectId}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, projectId: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                      >
+                        <option value="">Nenhum</option>
+                        {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="space-y-4">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Forma de Pagamento</label>
+                      <select 
+                        value={transactionForm.paymentMethod}
+                        onChange={(e) => setTransactionForm(prev => ({ ...prev, paymentMethod: e.target.value }))}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                      >
+                        <option value="PIX">PIX</option>
+                        <option value="Dinheiro">Dinheiro</option>
+                        <option value="Cartão de Crédito">Cartão de Crédito</option>
+                        <option value="Cartão de Débito">Cartão de Débito</option>
+                        <option value="Transferência">Transferência</option>
+                        <option value="Boleto">Boleto</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-b-[3rem]">
+                   <div className="w-full sm:w-auto">
+                     {editingId && (
+                        <button 
+                          onClick={() => handleDeleteTransaction(transactions.find(t => t.id === editingId)!)}
+                          className="w-full sm:w-auto px-6 py-4 bg-white text-rose-500 border border-rose-100 hover:bg-rose-50 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                        >
+                          <Trash2 size={16} /> Excluir Lançamento
+                        </button>
+                     )}
+                   </div>
+                   <div className="flex gap-4 w-full sm:w-auto">
+                      <button 
+                        onClick={() => { setIsAddingTransaction(false); resetTransactionForm(); }}
+                        className="flex-1 sm:flex-none px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
+                      >
+                        Cancelar
+                      </button>
+                      <button 
+                        onClick={handleSaveTransaction}
+                        disabled={loading}
+                        className="flex-1 sm:flex-none bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
+                      >
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                        Confirmar Movimentação
+                      </button>
+                   </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* ACCOUNT MODAL */}
+          {isAddingAccount && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => { setIsAddingAccount(false); setEditingId(null); }}
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden relative z-[1010] flex flex-col"
               >
-                <XCircle size={20} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nome da Conta *</label>
-                <input 
-                  type="text" 
-                  value={accountForm.name}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  placeholder="Ex: Banco do Brasil" 
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo *</label>
-                <select 
-                  value={accountForm.type}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                >
-                  <option value="Caixa">Caixa (Dinheiro)</option>
-                  <option value="Banco">Banco</option>
-                  <option value="PIX">PIX</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Saldo Inicial (R$)</label>
-                <input 
-                  type="number" 
-                  value={accountForm.balance}
-                  onChange={(e) => setAccountForm(prev => ({ ...prev, balance: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  placeholder="0,00" 
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button 
-                  onClick={() => { setIsAddingAccount(false); setEditingId(null); }} 
-                  className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleSaveAccount}
-                  disabled={loading}
-                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Conta'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-brand-blue relative group/acc">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-5 relative z-10">
+                    <div className="w-14 h-14 bg-white/10 backdrop-blur-md text-white rounded-2xl flex items-center justify-center transition-transform border border-white/10 group-hover/acc:rotate-6 duration-500 shadow-lg">
+                      <Wallet size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white tracking-tight leading-none mb-1">{editingId ? 'Editar Conta' : 'Nova Conta'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Patrimônio Líquido</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setIsAddingAccount(false); setEditingId(null); }} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={20} strokeWidth={3} />
+                  </button>
+                </div>
 
-      {isAddingProject && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAddingProject(false)} />
-          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="font-bold text-slate-900">{editingId ? 'Editar Projeto' : 'Novo Projeto'}</h3>
-              <button 
-                onClick={() => { setIsAddingProject(false); setEditingId(null); }} 
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <XCircle size={20} />
-              </button>
-            </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nome do Projeto *</label>
-                <input 
-                  type="text" 
-                  value={projectForm.name}
-                  onChange={(e) => setProjectForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  placeholder="Ex: Festa da Padroeira 2024" 
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Descrição</label>
-                <textarea 
-                  value={projectForm.description}
-                  onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10 min-h-[100px]" 
-                  placeholder="Detalhes do projeto..."
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Orçamento Previsto (R$)</label>
-                <input 
-                  type="number" 
-                  value={projectForm.budgetPlanned}
-                  onChange={(e) => setProjectForm(prev => ({ ...prev, budgetPlanned: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  placeholder="0,00" 
-                />
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button 
-                  onClick={() => { setIsAddingProject(false); setEditingId(null); }} 
-                  className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleSaveProject}
-                  disabled={loading}
-                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Projeto'}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="p-10 space-y-8">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identificação da Conta *</label>
+                    <input 
+                      type="text" 
+                      value={accountForm.name}
+                      onChange={(e) => setAccountForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      placeholder="Ex: Caixa Sede Paroquial" 
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tipo de Custódia *</label>
+                    <select 
+                      value={accountForm.type}
+                      onChange={(e) => setAccountForm(prev => ({ ...prev, type: e.target.value as any }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                    >
+                      <option value="Caixa">Caixa (Dinheiro Vivo)</option>
+                      <option value="Banco">Instituição Bancária</option>
+                      <option value="PIX">Chave PIX Dedicada</option>
+                    </select>
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Saldo Atualizado (R$)</label>
+                    <input 
+                      type="number" 
+                      value={accountForm.balance}
+                      onChange={(e) => setAccountForm(prev => ({ ...prev, balance: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      placeholder="0,00" 
+                    />
+                  </div>
+                </div>
 
-      {isAddingCategory && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsAddingCategory(false)} />
-          <div className="relative bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="font-bold text-slate-900">{editingId ? 'Editar Categoria' : 'Nova Categoria'}</h3>
-              <button 
-                onClick={() => { setIsAddingCategory(false); setEditingId(null); }} 
-                className="text-slate-400 hover:text-slate-600"
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center rounded-b-[3rem]">
+                   <button 
+                     onClick={handleSaveAccount}
+                     disabled={loading}
+                     className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                   >
+                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                     Finalizar Registro
+                   </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* PROJECT MODAL */}
+          {isAddingProject && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => { setIsAddingProject(false); setEditingId(null); }}
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden relative z-[1010] flex flex-col"
               >
-                <XCircle size={20} />
-              </button>
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-brand-yellow relative group/prj">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-5 relative z-10">
+                    <div className="w-14 h-14 bg-white/10 backdrop-blur-md text-white rounded-2xl flex items-center justify-center transition-transform border border-white/10 group-hover/prj:rotate-6 duration-500 shadow-lg">
+                      <Briefcase size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white tracking-tight leading-none mb-1">{editingId ? 'Editar Missão' : 'Nova Missão'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Planejamento Estratégico</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setIsAddingProject(false); setEditingId(null); }} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={20} strokeWidth={3} />
+                  </button>
+                </div>
+
+                <div className="p-10 space-y-8">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título da Missão *</label>
+                    <input 
+                      type="text" 
+                      value={projectForm.name}
+                      onChange={(e) => setProjectForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      placeholder="Ex: Investimento em Streaming" 
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Objetivo Geral</label>
+                    <textarea 
+                      value={projectForm.description}
+                      onChange={(e) => setProjectForm(prev => ({ ...prev, description: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all min-h-[120px] resize-none" 
+                      placeholder="Breve descrição dos frutos desta missão..."
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Teto Orçamentário (R$)</label>
+                    <input 
+                      type="number" 
+                      value={projectForm.budgetPlanned}
+                      onChange={(e) => setProjectForm(prev => ({ ...prev, budgetPlanned: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      placeholder="0,00" 
+                    />
+                  </div>
+                </div>
+
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center rounded-b-[3rem]">
+                   <button 
+                     onClick={handleSaveProject}
+                     disabled={loading}
+                     className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                   >
+                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                     Registrar Missão
+                   </button>
+                </div>
+              </motion.div>
             </div>
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Nome da Categoria *</label>
-                <input 
-                  type="text" 
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10" 
-                  placeholder="Ex: Equipamentos" 
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tipo *</label>
-                <select 
-                  value={categoryForm.type}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, type: e.target.value as any }))}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 outline-none focus:ring-2 focus:ring-brand-blue/10"
-                >
-                  <option value="Saída">Saída (Despesa)</option>
-                  <option value="Entrada">Entrada (Receita)</option>
-                </select>
-              </div>
-              <div className="flex justify-end gap-3 pt-4">
-                <button 
-                  onClick={() => { setIsAddingCategory(false); setEditingId(null); }} 
-                  className="px-4 py-2 text-slate-500 font-bold hover:bg-slate-50 rounded-xl transition-all"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleSaveCategory}
-                  disabled={loading}
-                  className="px-6 py-2 bg-brand-blue text-white font-bold rounded-xl shadow-md shadow-brand-blue/10 hover:opacity-90 transition-all disabled:opacity-50"
-                >
-                  {loading ? 'Salvando...' : editingId ? 'Salvar Alterações' : 'Criar Categoria'}
-                </button>
-              </div>
+          )}
+
+          {/* CATEGORY MODAL */}
+          {isAddingCategory && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
+                onClick={() => { setIsAddingCategory(false); setEditingId(null); }}
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] w-full max-w-md shadow-2xl overflow-hidden relative z-[1010] flex flex-col"
+              >
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-800 relative group/cat">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-5 relative z-10">
+                    <div className="w-14 h-14 bg-white/10 backdrop-blur-md text-white rounded-2xl flex items-center justify-center transition-transform border border-white/10 group-hover/cat:rotate-6 duration-500 shadow-lg">
+                      <Tag size={28} />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-black text-white tracking-tight leading-none mb-1">{editingId ? 'Editar Categoria' : 'Nova Categoria'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">Nomenclatura Financeira</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { setIsAddingCategory(false); setEditingId(null); }} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={20} strokeWidth={3} />
+                  </button>
+                </div>
+
+                <div className="p-10 space-y-8">
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título da Classificação *</label>
+                    <input 
+                      type="text" 
+                      value={categoryForm.name}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, name: e.target.value }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm transition-all" 
+                      placeholder="Ex: Equipamentos de Áudio" 
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Natureza do Fluxo *</label>
+                    <select 
+                      value={categoryForm.type}
+                      onChange={(e) => setCategoryForm(prev => ({ ...prev, type: e.target.value as any }))}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-[1.5rem] px-6 py-4 outline-none focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue font-bold text-sm appearance-none cursor-pointer"
+                    >
+                      <option value="Saída">Saída (Despesa Operacional)</option>
+                      <option value="Entrada">Entrada (Receita / Oferta)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex justify-end items-center rounded-b-[3rem]">
+                   <button 
+                     onClick={handleSaveCategory}
+                     disabled={loading}
+                     className="bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-2xl shadow-slate-200 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 flex items-center justify-center gap-3"
+                   >
+                     {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                     Salvar Classificação
+                   </button>
+                </div>
+              </motion.div>
             </div>
-          </div>
-        </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
 
     </div>

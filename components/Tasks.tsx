@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Task, TaskStatus, TaskPriority, User, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { 
@@ -29,6 +30,31 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   // Delete & Error States
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [globalError, setGlobalError] = useState<{title: string, msg: string, code?: string} | null>(null);
+
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    const isAnyModalOpen = isModalOpen || deleteId;
+    
+    if (isAnyModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, deleteId]);
 
   // Form State
   const [formData, setFormData] = useState<{
@@ -454,8 +480,8 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-10 space-y-10 animate-in fade-in duration-1000">
-      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-6">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-8 space-y-6 animate-in fade-in duration-1000">
+      <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-2">
         <div className="animate-in slide-in-from-left-8 duration-700">
           <div className="flex items-center gap-4 mb-4">
             <div className="w-14 h-14 bg-brand-blue rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-brand-blue/30 rotate-3">
@@ -463,7 +489,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
             </div>
             <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Produção Ativa</p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Nossa Missão</h1>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Tarefas</h1>
           <p className="text-slate-400 font-medium text-lg italic mt-2">Sincronize o ritmo das atividades pastorais com amor.</p>
         </div>
 
@@ -544,83 +570,92 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
       </div>
 
       {/* CONFIRM DELETE MODAL */}
-      <AnimatePresence>
-        {deleteId && (
-            <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-                <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
-                    onClick={() => setDeleteId(null)}
-                />
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
-                    className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-10"
-                >
-                    <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2rem] flex items-center justify-center mx-auto mb-6 shadow-inner">
-                        <Trash2 size={32} strokeWidth={2.5} />
-                    </div>
-                    <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Excluir Tarefa?</h3>
-                    <p className="text-sm text-slate-400 font-medium mb-10 leading-relaxed px-4">Esta decisão é irreversível. Todas as informações desta atividade serão permanentemente removidas.</p>
-                    
-                    <div className="flex gap-4">
-                        <button 
-                          onClick={() => setDeleteId(null)} 
-                          className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest bg-slate-50 hover:bg-slate-100 rounded-2xl transition-all active:scale-95"
-                          disabled={loading}
-                        >
-                            Voltar
-                        </button>
-                        <button 
-                          onClick={confirmDelete}
-                          disabled={loading}
-                          className="flex-1 py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
-                        >
-                            {loading && <Loader2 size={16} className="animate-spin" />}
-                            Confirmar
-                        </button>
-                    </div>
-                </motion.div>
-            </div>
-        )}
-      </AnimatePresence>
+      {createPortal(
+        <AnimatePresence>
+          {deleteId && (
+              <div className="fixed inset-0 z-[2000] flex items-center justify-center p-6">
+                  <motion.div 
+                      key="delete-backdrop"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
+                      onClick={() => setDeleteId(null)}
+                  />
+                  <motion.div 
+                      key="delete-content"
+                      initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                      className="bg-white rounded-[3rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-[2010]"
+                  >
+                      <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2.2rem] flex items-center justify-center mx-auto mb-6 shadow-inner ring-8 ring-rose-50/50">
+                          <Trash2 size={32} strokeWidth={2.5} />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900 tracking-tight mb-3">Excluir Tarefa?</h3>
+                      <p className="text-sm font-medium text-slate-400 mb-10 leading-relaxed px-4 italic">Esta decisão é irreversível. Todas as informações desta atividade serão permanentemente removidas.</p>
+                      
+                      <div className="flex gap-4">
+                          <button 
+                            onClick={() => setDeleteId(null)} 
+                            className="flex-1 py-4 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all"
+                            disabled={loading}
+                          >
+                              Voltar
+                          </button>
+                          <button 
+                            onClick={confirmDelete}
+                            disabled={loading}
+                            className="flex-1 py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-rose-200 transition-all flex items-center justify-center gap-2 active:scale-95"
+                          >
+                              {loading && <Loader2 size={16} className="animate-spin" />}
+                              Confirmar
+                          </button>
+                      </div>
+                  </motion.div>
+              </div>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
 
       {/* TASK FORM MODAL */}
-      <AnimatePresence>
-        {isModalOpen && (
-            <div className="fixed inset-0 z-[150] flex items-center justify-center p-4">
-                <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" 
-                    onClick={() => setIsModalOpen(false)} 
-                />
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                    className="bg-white rounded-[3rem] w-full max-w-3xl shadow-[0_64px_128px_-24px_rgba(0,0,0,0.2)] flex flex-col max-h-[90vh] relative z-10 overflow-hidden ring-1 ring-black/5"
-                >
-                    {/* Modal Header */}
-                    <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-50/30">
-                        <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <div className="w-10 h-10 bg-brand-blue rounded-xl flex items-center justify-center text-white shadow-lg shadow-brand-blue/20">
-                                    {editingId ? <Edit2 size={20} /> : <Plus size={20} strokeWidth={3} />}
-                                </div>
-                                <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-                                    {editingId ? 'Ajustar Atividade' : 'Nova Missão'}
-                                </h3>
-                            </div>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-[3.25rem]">Workflow Operacional Pascom</p>
-                        </div>
-                        <button onClick={() => setIsModalOpen(false)} className="p-4 bg-white text-slate-300 hover:text-slate-900 rounded-[1.5rem] shadow-sm border border-slate-100 transition-all active:scale-90">
-                            <X size={24} strokeWidth={3} />
-                        </button>
-                    </div>
-                    
-                    {/* Modal Body */}
-                    <div className="p-6 md:p-12 overflow-y-auto flex-1 space-y-10 hide-scroll">
+      {createPortal(
+        <AnimatePresence>
+          {isModalOpen && (
+              <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-6">
+                  <motion.div 
+                      key="form-backdrop"
+                      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                      className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
+                      onClick={() => setIsModalOpen(false)} 
+                  />
+                  <motion.div 
+                      key="form-content"
+                      initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                      className="bg-white rounded-[3rem] w-full max-w-3xl shadow-[0_64px_128px_-24px_rgba(0,0,0,0.2)] flex flex-col max-h-[90vh] relative z-[1010] overflow-hidden"
+                  >
+                      {/* Modal Header */}
+                      <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 overflow-hidden relative">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                          <div className="relative z-10">
+                              <div className="flex items-center gap-4 mb-2">
+                                  <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg">
+                                      {editingId ? <Edit2 size={24} /> : <Plus size={24} strokeWidth={3} />}
+                                  </div>
+                                  <h3 className="text-3xl font-black text-white tracking-tight leading-none">
+                                      {editingId ? 'Ajustar Atividade' : 'Nova Missão'}
+                                  </h3>
+                              </div>
+                              <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-[3.75rem]">Workflow Operacional Pascom</p>
+                          </div>
+                          <button onClick={() => setIsModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                              <X size={24} strokeWidth={3} />
+                          </button>
+                      </div>
+                      
+                      {/* Modal Body */}
+                      <div className="p-6 md:p-12 overflow-y-auto flex-1 space-y-10 hide-scroll">
                         {/* Title & Status Row */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                             <div className="md:col-span-8">
@@ -776,7 +811,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
                     </div>
 
                     {/* Modal Footer */}
-                    <div className="px-10 py-10 bg-slate-50/50 border-t border-slate-50 flex flex-col sm:flex-row justify-between items-center gap-6">
+                    <div className="px-10 py-10 bg-slate-50/20 border-t border-slate-100 flex flex-col sm:flex-row justify-between items-center gap-6">
                         <div className="w-full sm:w-auto">
                             {editingId && (
                                 <button 
@@ -797,17 +832,19 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
                             <button 
                                 onClick={handleSave}
                                 disabled={loading || !formData.title}
-                                className="flex-[2] sm:flex-none px-12 py-5 bg-brand-blue text-white font-black text-xs uppercase tracking-[0.2em] rounded-[1.8rem] shadow-2xl shadow-brand-blue/30 hover:bg-brand-blue/90 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
+                                className="flex-[2] sm:flex-none px-12 py-5 bg-slate-900 text-white font-black text-xs uppercase tracking-[0.2em] rounded-[1.8rem] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:scale-100 disabled:shadow-none"
                             >
-                                {loading ? <Loader2 size={18} className="animate-spin text-white/50" /> : <Save size={18} strokeWidth={3} />}
-                                {editingId ? 'Sincronizar' : 'Publicar Fluxo'}
+                                {loading ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+                                <span>Salvar Alterações</span>
                             </button>
                         </div>
                     </div>
                 </motion.div>
             </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>,
+        document.body
+      )}
     </div>
   );
 };

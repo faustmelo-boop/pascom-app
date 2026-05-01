@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Home, Calendar, CheckSquare, Users, GraduationCap, Bell, Search, Menu, Loader2, LogOut, LayoutGrid, X, Box, Palette, Copy, ChevronRight, ClipboardList, DollarSign, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Home, Calendar, CheckSquare, Users, GraduationCap, Bell, Search, Menu, Loader2, LogOut, LayoutGrid, X, Box, Palette, Copy, ChevronRight, ClipboardList, DollarSign } from 'lucide-react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from './supabaseClient';
@@ -31,6 +31,7 @@ function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   
   const [avaBreadcrumbs, setAvaBreadcrumbs] = useState<React.ReactNode | null>(null);
@@ -94,7 +95,9 @@ function App() {
 
   // Scroll to top on tab change
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo({ top: 0, behavior: 'auto' });
+    }
   }, [activeTab]);
 
   // Handle Auth Session
@@ -301,14 +304,29 @@ function App() {
     return (
       <button
         onClick={() => setActiveTab(tab)}
-        className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all ${
-            isActive ? 'text-white' : 'text-white/50'
+        className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-all relative z-10 ${
+            isActive ? 'text-white' : 'text-white/50 hover:text-white/80'
         }`}
       >
-        <div className={`p-1.5 rounded-xl transition-all ${isActive ? 'bg-white/10 text-brand-green' : ''}`}>
-            <Icon size={20} fill={isActive ? 'currentColor' : 'none'} fillOpacity={0.2} />
+        <div className="relative p-1.5 flex items-center justify-center">
+            {isActive && (
+              <motion.div 
+                layoutId="mobileActiveTab"
+                className="absolute inset-0 bg-white/20 rounded-xl"
+                transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+              />
+            )}
+            <motion.div
+              animate={{ 
+                scale: isActive ? 1.1 : 1,
+                color: isActive ? '#4ade80' : 'currentColor' // brand-green
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <Icon size={20} fill={isActive ? 'currentColor' : 'none'} fillOpacity={0.2} />
+            </motion.div>
         </div>
-        <span className="text-[9px] font-black uppercase tracking-tighter">{label}</span>
+        <span className={`text-[9px] font-black uppercase tracking-tighter transition-all ${isActive ? 'opacity-100' : 'opacity-70'}`}>{label}</span>
       </button>
     );
 };
@@ -324,12 +342,25 @@ function App() {
                 : 'text-slate-400 font-bold hover:text-slate-600 hover:bg-slate-50'
         }`}
       >
-        <Icon size={18} className={`transition-all ${isActive ? 'scale-110' : 'group-hover:scale-110'}`} strokeWidth={isActive ? 3 : 2} />
-        <span className="text-[11px] uppercase tracking-widest">{label}</span>
+        <motion.div
+          animate={{ scale: isActive ? 1.1 : 1 }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
+          className="relative z-10"
+        >
+          <Icon size={18} strokeWidth={isActive ? 3 : 2} />
+        </motion.div>
+        <span className="text-[11px] uppercase tracking-widest relative z-10">{label}</span>
         {isActive && (
           <motion.div 
-            layoutId="activeTab"
-            className="absolute -bottom-1 left-4 right-4 h-1 bg-brand-blue rounded-full shadow-[0_4px_12px_rgba(59,130,246,0.3)]"
+            layoutId="activeTabUnderline"
+            className="absolute -bottom-1 left-4 right-4 h-1 bg-brand-blue rounded-full shadow-[0_4px_12px_rgba(0,124,186,0.3)]"
+            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+          />
+        )}
+        {!isActive && (
+          <motion.div 
+            layoutId="hoverTab"
+            className="absolute inset-0 bg-slate-200/0 group-hover:bg-slate-200/50 rounded-xl -z-0 transition-colors"
           />
         )}
       </button>
@@ -348,7 +379,7 @@ function App() {
         </AnimatePresence>
 
         {/* Mobile Header */}
-        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 p-4 shrink-0 flex justify-between items-center z-50 sticky top-0">
+        <header className="md:hidden bg-white/80 backdrop-blur-md border-b border-slate-100 py-2 px-4 shrink-0 flex justify-between items-center z-50 sticky top-0">
            <div className="flex items-center gap-2">
               <img src="https://i.imgur.com/ofoiwCd.png" alt="Pascom Tasks" className="h-8 w-auto" />
            </div>
@@ -407,14 +438,14 @@ function App() {
               <div className="w-px h-8 bg-slate-200" />
               
               {currentUser && (
-                <div className="flex items-center gap-4 bg-slate-900 shadow-xl shadow-slate-900/10 p-1.5 pr-5 rounded-[1.8rem] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer" onClick={() => setActiveTab('perfil')}>
+                <div className="flex items-center gap-4 bg-brand-blue shadow-xl shadow-brand-blue/10 p-1.5 pr-5 rounded-[1.8rem] transition-all hover:scale-[1.02] active:scale-95 cursor-pointer" onClick={() => setActiveTab('perfil')}>
                    <div className="relative">
                       <img src={currentUser.avatar} alt="Me" className="w-9 h-9 rounded-2xl object-cover shadow-sm border-2 border-white/20" />
-                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-brand-green border-2 border-slate-900 rounded-full shadow-sm" />
+                      <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-brand-green border-2 border-brand-blue rounded-full shadow-sm" />
                    </div>
                    <div className="hidden lg:block text-left">
                       <p className="text-[11px] font-black text-white truncate tracking-tight leading-none mb-1">{currentUser.name.split(' ')[0]}</p>
-                      <p className="text-[8px] uppercase font-bold text-slate-400 tracking-wider">
+                      <p className="text-[8px] uppercase font-bold text-white/60 tracking-wider">
                           {currentUser.role}
                       </p>
                    </div>
@@ -423,9 +454,22 @@ function App() {
            </div>
         </header>
 
-        <div className={`flex-1 overflow-y-auto pt-4 pb-24 md:pb-12 hide-scroll transition-all duration-700 ${loading ? 'blur-xl grayscale opacity-50 scale-[0.98]' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}>
+        <div 
+          ref={scrollRef}
+          className={`flex-1 overflow-y-auto pt-1 pb-24 md:pb-12 hide-scroll transition-all duration-700 ${loading ? 'blur-xl grayscale opacity-50 scale-[0.98]' : 'blur-0 grayscale-0 opacity-100 scale-100'}`}
+        >
           <div className="max-w-7xl mx-auto md:px-6">
-            {renderContent()}
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={activeTab}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -15 }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+              >
+                {renderContent()}
+              </motion.div>
+            </AnimatePresence>
           </div>
         </div>
 

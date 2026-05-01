@@ -5,7 +5,7 @@
   "scope": "/",
   "display": "standalone",
   "background_color": "#f3f4f6",
-  "theme_color": "#2563eb",
+  "theme_color": "#007cba",
   "description": "Gestão completa da Pastoral da Comunicação",
   "orientation": "portrait-primary",
   "icons": [

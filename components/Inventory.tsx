@@ -1,4 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { InventoryItem, User, UserRole } from '../types';
 import { supabase } from '../supabaseClient';
 import { Box, Plus, Search, Filter, Camera, Trash2, Edit2, X, Save, Loader2, AlertTriangle, CheckCircle2, AlertCircle, Wrench, User as UserIcon } from 'lucide-react';
@@ -39,6 +41,31 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
 
   const [selectedImageFile, setSelectedImageFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    const isAnyModalOpen = isModalOpen || deleteId;
+    
+    if (isAnyModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen, deleteId]);
 
   // Admin Check
   const isAdmin = currentUser && (
@@ -195,7 +222,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
   });
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-8 animate-in fade-in duration-700">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-8 space-y-8 animate-in fade-in duration-700">
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4">
         <div>
@@ -338,157 +365,215 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
           </div>
       )}
 
-      {/* Create/Edit Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50 rounded-t-2xl">
-              <h3 className="text-lg font-bold text-gray-800">{editingId ? 'Editar Item' : 'Novo Equipamento'}</h3>
-              <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            
-            <div className="p-6 overflow-y-auto flex-1 space-y-4">
-                {/* Image Upload */}
-                <div className="flex flex-col items-center justify-center mb-4">
-                    <div 
-                        onClick={() => fileInputRef.current?.click()}
-                        className="w-full h-48 bg-gray-100 rounded-lg border-2 border-dashed border-gray-300 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors overflow-hidden relative group"
-                    >
-                        {formData.image ? (
-                            <>
-                                <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Camera className="text-white" size={32} />
-                                </div>
-                            </>
-                        ) : (
-                            <>
-                                <Camera className="text-gray-400 mb-2" size={32} />
-                                <span className="text-sm text-gray-500 font-medium">Adicionar Foto</span>
-                            </>
-                        )}
-                    </div>
-                    <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={handleImageSelect}
-                    />
-                </div>
-
-                {/* Fields */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Equipamento</label>
-                    <input 
-                        type="text" 
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-gray-500"
-                        placeholder="Ex: Câmera Canon T7i"
-                    />
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Descrição</label>
-                    <textarea 
-                        value={formData.description}
-                        onChange={(e) => setFormData({...formData, description: e.target.value})}
-                        rows={3}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none resize-none placeholder-gray-500"
-                        placeholder="Detalhes, número de série, acessórios inclusos..."
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Conservação</label>
-                        <select 
-                            value={formData.condition}
-                            onChange={(e) => setFormData({...formData, condition: e.target.value as any})}
-                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
-                        >
-                            {['Novo', 'Bom', 'Regular', 'Ruim', 'Danificado'].map(c => <option key={c} value={c}>{c}</option>)}
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Status Atual</label>
-                        <select 
-                            value={formData.status}
-                            onChange={(e) => setFormData({...formData, status: e.target.value as any})}
-                            className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
-                        >
-                            {['Disponível', 'Em Uso', 'Em Manutenção'].map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quem está cuidando deste bem?</label>
-                    <select 
-                        value={formData.holderId}
-                        onChange={(e) => setFormData({...formData, holderId: e.target.value})}
-                        className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
-                    >
-                        <option value="">-- Guardado (Na Sede) --</option>
-                        {users.map(u => (
-                            <option key={u.id} value={u.id}>{u.name}</option>
-                        ))}
-                    </select>
-                </div>
-            </div>
-
-            <div className="p-4 bg-gray-50 border-t border-gray-100 flex gap-3 justify-end rounded-b-2xl">
-              <button 
+      {/* PORTALED MODALS */}
+      {createPortal(
+        <AnimatePresence>
+          {/* Create/Edit Modal */}
+          {isModalOpen && (
+            <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-gray-600 font-medium hover:bg-gray-200 rounded-lg transition-colors"
+              />
+              <motion.div 
+                initial={{ scale: 0.95, opacity: 0, y: 30 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 30 }}
+                className="bg-white rounded-[3rem] w-full max-w-xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.25)] flex flex-col max-h-[90vh] overflow-hidden relative z-[1010]"
               >
-                Cancelar
-              </button>
-              <button 
-                onClick={handleSave}
-                disabled={loading}
-                className="px-6 py-2 bg-brand-blue text-white font-medium rounded-lg hover:opacity-90 transition-colors shadow-sm disabled:opacity-70 flex items-center gap-2"
-              >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative group/header">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                  <div className="flex items-center gap-6 relative z-10">
+                    <div className="w-16 h-16 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg group-hover/header:rotate-12 duration-500">
+                      <Box size={32} />
+                    </div>
+                    <div>
+                      <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-1">{editingId ? 'Editar Item' : 'Novo Equipamento'}</h3>
+                      <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.3em]">Zelo pelo Patrimônio</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setIsModalOpen(false)} className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10">
+                    <X size={24} strokeWidth={3} />
+                  </button>
+                </div>
+                
+                <div className="p-10 overflow-y-auto flex-1 space-y-10 hide-scroll">
+                    {/* Image Upload */}
+                    <div className="space-y-4">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Identificação Visual</label>
+                        <div 
+                            onClick={() => fileInputRef.current?.click()}
+                            className="w-full h-64 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-100 hover:border-brand-blue/30 transition-all overflow-hidden relative group shadow-inner"
+                        >
+                            {formData.image ? (
+                                <>
+                                    <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-slate-900/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                                        <div className="p-5 bg-white rounded-2xl shadow-xl scale-90 group-hover:scale-100 transition-transform">
+                                            <Camera className="text-brand-blue" size={32} />
+                                        </div>
+                                    </div>
+                                </>
+                            ) : (
+                                <div className="text-center space-y-4">
+                                    <div className="p-6 bg-white rounded-3xl shadow-sm mx-auto w-fit text-slate-300 group-hover:text-brand-blue transition-colors group-hover:scale-110 duration-500">
+                                        <Camera size={40} strokeWidth={1.5} />
+                                    </div>
+                                    <p className="text-sm text-slate-400 font-bold italic">Toque para selecionar imagem</p>
+                                </div>
+                            )}
+                        </div>
+                        <input 
+                            type="file" 
+                            ref={fileInputRef} 
+                            className="hidden" 
+                            accept="image/*" 
+                            onChange={handleImageSelect}
+                        />
+                    </div>
 
-      {/* Delete Confirmation Modal */}
-      {deleteId && (
-          <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-              <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full text-center">
-                  <div className="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <AlertTriangle size={24} />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900 mb-2">Excluir Item?</h3>
-                  <p className="text-sm text-gray-600 mb-6">Esta ação não pode ser desfeita. O histórico deste equipamento será perdido.</p>
-                  
-                  <div className="flex gap-3">
+                    {/* Fields */}
+                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome do Equipamento</label>
+                          <input 
+                              type="text" 
+                              value={formData.name}
+                              onChange={(e) => setFormData({...formData, name: e.target.value})}
+                              className="w-full bg-slate-50 border border-slate-200 px-6 py-5 rounded-[1.5rem] font-bold text-sm focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue outline-none transition-all"
+                              placeholder="Ex: Câmera Canon T7i"
+                          />
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Descrição / Especificações</label>
+                          <textarea 
+                              value={formData.description}
+                              onChange={(e) => setFormData({...formData, description: e.target.value})}
+                              rows={4}
+                              className="w-full bg-slate-50 border border-slate-200 px-6 py-5 rounded-[1.5rem] font-bold text-sm focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue outline-none resize-none transition-all"
+                              placeholder="Detalhes técnicos, número de série..."
+                          />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
+                          <div className="space-y-4">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Estado de Conservação</label>
+                              <select 
+                                  value={formData.condition}
+                                  onChange={(e) => setFormData({...formData, condition: e.target.value as any})}
+                                  className="w-full bg-slate-50 border border-slate-200 px-6 py-5 rounded-[1.5rem] font-bold text-sm focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue outline-none transition-all appearance-none cursor-pointer"
+                              >
+                                  {['Novo', 'Bom', 'Regular', 'Ruim', 'Danificado'].map(c => <option key={c} value={c}>{c}</option>)}
+                              </select>
+                          </div>
+                          <div className="space-y-4">
+                              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status Operacional</label>
+                              <select 
+                                  value={formData.status}
+                                  onChange={(e) => setFormData({...formData, status: e.target.value as any})}
+                                  className="w-full bg-slate-50 border border-slate-200 px-6 py-5 rounded-[1.5rem] font-bold text-sm focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue outline-none transition-all appearance-none cursor-pointer"
+                              >
+                                  {['Disponível', 'Em Uso', 'Em Manutenção'].map(s => <option key={s} value={s}>{s}</option>)}
+                              </select>
+                          </div>
+                      </div>
+
+                      <div className="space-y-4">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Custódia do Bem</label>
+                          <select 
+                              value={formData.holderId}
+                              onChange={(e) => setFormData({...formData, holderId: e.target.value})}
+                              className="w-full bg-slate-50 border border-slate-200 px-6 py-5 rounded-[1.5rem] font-bold text-sm focus:ring-8 focus:ring-brand-blue/5 focus:border-brand-blue outline-none transition-all appearance-none cursor-pointer"
+                          >
+                              <option value="">-- Guardado (Na Sede) --</option>
+                              {users.map(u => (
+                                  <option key={u.id} value={u.id}>{u.name}</option>
+                              ))}
+                          </select>
+                      </div>
+                    </div>
+                </div>
+
+                <div className="p-10 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center rounded-b-[3rem]">
+                   <div className="w-full sm:w-auto">
+                     {editingId && (
+                        <button 
+                          onClick={() => setDeleteId(editingId)}
+                          className="w-full sm:w-auto px-6 py-4 bg-white text-rose-500 border border-rose-100 hover:bg-rose-50 rounded-2xl font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all active:scale-95 shadow-sm"
+                        >
+                          <Trash2 size={16} /> Excluir
+                        </button>
+                     )}
+                   </div>
+                   <div className="flex gap-4 w-full sm:w-auto">
                       <button 
-                        onClick={() => setDeleteId(null)} 
-                        className="flex-1 py-2.5 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
-                        disabled={loading}
+                        onClick={() => setIsModalOpen(false)}
+                        className="flex-1 sm:flex-none px-8 py-5 text-slate-400 hover:text-slate-900 font-black text-[10px] uppercase tracking-widest transition-all"
                       >
-                          Cancelar
+                        Cancelar
                       </button>
                       <button 
-                        onClick={handleDelete}
+                        onClick={handleSave}
                         disabled={loading}
-                        className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors shadow-sm flex items-center justify-center gap-2"
+                        className="flex-1 sm:flex-none bg-slate-900 text-white px-10 py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] shadow-2xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all disabled:opacity-70 flex items-center justify-center gap-3"
                       >
-                          {loading && <Loader2 size={16} className="animate-spin" />}
-                          Excluir
+                        {loading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+                        Salvar Item
                       </button>
-                  </div>
+                   </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+
+          {/* Delete Confirmation Modal */}
+          {deleteId && (
+              <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+                    onClick={() => setDeleteId(null)}
+                  />
+                  <motion.div 
+                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
+                    className="bg-white rounded-[2.5rem] shadow-2xl p-10 max-w-sm w-full text-center relative z-[2010] border border-slate-100"
+                  >
+                      <div className="w-20 h-20 bg-rose-50 text-rose-500 rounded-[2.2rem] flex items-center justify-center mx-auto mb-8 ring-8 ring-rose-50/50 shadow-inner">
+                          <Trash2 size={32} strokeWidth={2.5} />
+                      </div>
+                      <h3 className="text-2xl font-black text-slate-900 mb-2 tracking-tight">Excluir Item?</h3>
+                      <p className="text-sm text-slate-400 font-bold mb-10 italic leading-relaxed">Esta ação não pode ser desfeita. O histórico deste equipamento será perdido no servidor.</p>
+                      
+                      <div className="flex flex-col gap-3">
+                          <button 
+                            onClick={handleDelete}
+                            disabled={loading}
+                            className="w-full py-5 bg-rose-500 hover:bg-rose-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-xl shadow-rose-500/20 flex items-center justify-center gap-3 active:scale-95"
+                          >
+                              {loading ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
+                              Confirmar Exclusão
+                          </button>
+                          <button 
+                            onClick={() => setDeleteId(null)} 
+                            className="w-full py-5 text-slate-400 hover:text-slate-900 rounded-2xl font-black text-xs uppercase tracking-widest transition-all hover:bg-slate-50"
+                            disabled={loading}
+                          >
+                              Cancelar Operação
+                          </button>
+                      </div>
+                  </motion.div>
               </div>
-          </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
     </div>
   );

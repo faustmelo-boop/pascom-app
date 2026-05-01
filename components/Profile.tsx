@@ -1,4 +1,5 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { User, Task, ScheduleEvent, Post, TaskStatus } from '../types';
 import { supabase } from '../supabaseClient';
 import { 
@@ -38,6 +39,29 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [passLoading, setPassLoading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({ new: '', confirm: '' });
+
+  // Scroll lock when modal is open
+  useEffect(() => {
+    const scrollContainer = document.querySelector('.overflow-y-auto.flex-1');
+    if (isPasswordModalOpen) {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'hidden';
+      }
+      document.body.style.overflow = 'hidden';
+    } else {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    }
+    
+    return () => {
+      if (scrollContainer instanceof HTMLElement) {
+        scrollContainer.style.overflow = 'auto';
+      }
+      document.body.style.overflow = 'unset';
+    };
+  }, [isPasswordModalOpen]);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -162,7 +186,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
   };
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-10 pb-32 space-y-8 md:space-y-12 animate-in fade-in duration-1000">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-10 pb-32 space-y-8 md:space-y-12 animate-in fade-in duration-1000">
       
       {/* modern Hero Header */}
       <section className="relative h-[320px] sm:h-[280px] md:h-[350px] rounded-[2rem] md:rounded-[3rem] overflow-hidden group shadow-2xl">
@@ -216,7 +240,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                              transition={{ delay: 0.3 }}
                              className="text-white/60 text-base md:text-xl font-bold italic font-sans"
                         >
-                            {user.role} na Pascom Hub
+                            Ativo na Pascom
                         </motion.p>
                     </div>
                 </div>
@@ -279,7 +303,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
       {/* Bento Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
         
-        {/* Left Aspect: Impact & Card */}
+        {/* Left Aspect: Impact */}
         <div className="lg:col-span-4 space-y-6 md:space-y-8">
             {/* Impact Bento Box */}
             <motion.div 
@@ -294,8 +318,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <Award size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Meus Frutos no Serviço</h3>
-                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Caminhada Técnica e Pastoral</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Caminhada na Pastoral</h3>
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Resumo de atividades</p>
                     </div>
                 </div>
 
@@ -304,8 +328,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="p-2.5 md:p-3 bg-white rounded-xl md:rounded-2xl text-brand-green shadow-sm shadow-brand-green/10 group-hover:bg-brand-green group-hover:text-white transition-all"><CheckCircle2 size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /></div>
                             <div>
-                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-green/70 transition-colors">Atividades</p>
-                                <span className="text-base md:text-lg font-black text-slate-800">Missões Concluídas</span>
+                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-green/70 transition-colors">Missões</p>
+                                <span className="text-base md:text-lg font-black text-slate-800">Concluídas</span>
                             </div>
                         </div>
                         <span className="text-2xl md:text-3xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.tasksCompleted}</span>
@@ -326,54 +350,13 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="p-2.5 md:p-3 bg-white rounded-xl md:rounded-2xl text-brand-blue shadow-sm shadow-brand-blue/10 group-hover:bg-brand-blue group-hover:text-white transition-all"><Layout size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /></div>
                             <div>
-                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-blue/70 transition-colors">Engajamento</p>
+                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-blue/70 transition-colors">Mural</p>
                                 <span className="text-base md:text-lg font-black text-slate-800">Publicações</span>
                             </div>
                         </div>
                         <span className="text-2xl md:text-3xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.postsCount}</span>
                     </div>
                 </div>
-            </motion.div>
-
-            {/* modern Virtual ID Card */}
-            <motion.div 
-               whileHover={{ scale: 1.02 }}
-               initial={{ opacity: 0, y: 20 }}
-               animate={{ opacity: 1, y: 0 }}
-               transition={{ delay: 0.1 }}
-               className="bg-slate-900 p-8 md:p-10 rounded-[2.5rem] md:rounded-[3rem] shadow-2xl relative overflow-hidden group cursor-pointer"
-            >
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-full -mr-16 -mt-16 group-hover:scale-150 transition-transform duration-1000" />
-                 <div className="absolute bottom-0 left-0 w-24 h-24 bg-brand-blue/20 blur-2xl rounded-full" />
-                 
-                 <div className="flex justify-between items-start mb-10 md:mb-12">
-                    <div className="w-10 h-10 md:w-12 md:h-12 bg-white/10 backdrop-blur-md rounded-xl flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform">
-                        <Share2 size={20} className="md:w-6 md:h-6 text-white/60" />
-                    </div>
-                    <div className="text-right">
-                        <p className="text-[8px] md:text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Membro Oficial</p>
-                        <p className="text-[10px] md:text-xs font-bold text-white leading-none italic">ID-{user.id.slice(0, 8)}</p>
-                    </div>
-                 </div>
-
-                 <div className="flex items-center gap-4 md:gap-6 mb-6 md:mb-8">
-                    <UserCircle size={40} className="md:w-12 md:h-12 text-brand-blue opacity-80 group-hover:rotate-12 transition-transform" />
-                    <div>
-                        <h4 className="text-white font-black text-lg md:text-xl tracking-tight leading-none mb-1 md:mb-2">Cartão do Agente</h4>
-                        <p className="text-white/40 text-[8px] md:text-[10px] font-black uppercase tracking-widest leading-none">Acesso Autorizado Pascom</p>
-                    </div>
-                 </div>
-
-                 <div className="flex items-end justify-between">
-                    <div>
-                        <p className="text-[8px] md:text-[9px] font-black text-brand-blue uppercase tracking-[0.2em] mb-1">Especialidade Master</p>
-                        <p className="text-xl md:text-2xl font-black text-white uppercase tracking-tighter truncate max-w-[150px] md:max-w-[180px]">{user.role}</p>
-                    </div>
-                    <div className="flex items-center gap-2 bg-white shadow-xl shadow-white/10 px-3 py-1.5 md:px-4 md:py-2 rounded-xl md:rounded-2xl">
-                        <Star size={10} className="md:w-3 md:h-3 fill-brand-yellow text-brand-yellow" />
-                        <span className="text-[8px] md:text-[10px] font-black text-slate-800">PRO</span>
-                    </div>
-                 </div>
             </motion.div>
         </div>
 
@@ -391,8 +374,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                    <div className="flex items-center gap-4">
                         <div className="p-4 bg-brand-blue/5 text-brand-blue rounded-3xl shadow-sm"><Settings size={28} /></div>
                         <div>
-                            <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">Dados Sincronizados</h3>
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Configurações da Conta</p>
+                            <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">Minhas Informações</h3>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Informações básicas</p>
                         </div>
                    </div>
                    {isEditing && (
@@ -411,17 +394,17 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         className="grid grid-cols-1 md:grid-cols-2 gap-10"
                     >
                         <div className="space-y-4">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Nome Social Pascom</label>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Nome</label>
                             <input 
                                 type="text" 
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
                                 className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[2rem] focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none font-bold text-slate-800 text-lg transition-all"
-                                placeholder="Seu nome completo..."
+                                placeholder="Seu nome..."
                             />
                         </div>
                         <div className="space-y-4">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Ciclo de Nascimento</label>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Data de nascimento</label>
                             <div className="relative group">
                                 <input 
                                     type="date" 
@@ -433,9 +416,9 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                             </div>
                         </div>
                         <div className="md:col-span-2 space-y-4">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail de Acesso (Fixo)</label>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail</label>
                             <div className="w-full px-8 py-5 bg-slate-100 text-slate-400 border border-slate-200 rounded-[2rem] font-bold">
-                                {email || 'Buscando...'}
+                                {email || 'Indisponível'}
                             </div>
                         </div>
                     </motion.div>
@@ -444,29 +427,15 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <div className="group flex items-start gap-6 p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:shadow-xl transition-all">
                             <div className="p-4 bg-white rounded-2xl shadow-sm text-slate-400 group-hover:text-brand-blue transition-colors"><Mail size={24} /></div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">E-mail Corporativo</p>
-                                <p className="text-xl font-black text-slate-800 tracking-tight leading-none truncate max-w-[200px]">{email || 'Indisponível'}</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">E-mail</p>
+                                <p className="text-xl font-black text-slate-800 tracking-tight leading-none truncate max-w-[200px]">{email || 'Não informado'}</p>
                             </div>
                         </div>
                         <div className="group flex items-start gap-6 p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:shadow-xl transition-all">
                             <div className="p-4 bg-white rounded-2xl shadow-sm text-slate-400 group-hover:text-brand-blue transition-colors"><Calendar size={24} /></div>
                             <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">Celebração Vida</p>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">Data de nascimento</p>
                                 <p className="text-xl font-black text-slate-800 tracking-tight leading-none uppercase">{formatBirthday(user.birthday)}</p>
-                            </div>
-                        </div>
-                        <div className="group flex items-start gap-6 p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:shadow-xl transition-all">
-                            <div className="p-4 bg-white rounded-2xl shadow-sm text-slate-400 group-hover:text-brand-blue transition-colors"><Briefcase size={24} /></div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">Cargo Estratégico</p>
-                                <p className="text-xl font-black text-slate-800 tracking-tight leading-none uppercase">{user.role}</p>
-                            </div>
-                        </div>
-                        <div className="group flex items-start gap-6 p-6 rounded-[2.5rem] bg-slate-50 border border-slate-100/50 hover:bg-white hover:shadow-xl transition-all">
-                            <div className="p-4 bg-white rounded-2xl shadow-sm text-slate-400 group-hover:text-brand-blue transition-colors"><Clock size={24} /></div>
-                            <div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-1 italic opacity-60">Última Atualização</p>
-                                <p className="text-xl font-black text-slate-800 tracking-tight leading-none uppercase">Hoje</p>
                             </div>
                         </div>
                     </div>
@@ -484,8 +453,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                 <div className="flex items-center gap-4 mb-12">
                    <div className="p-4 bg-brand-green/5 text-brand-green rounded-3xl shadow-sm"><Award size={28} /></div>
                    <div>
-                       <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">Skill Matrix</h3>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Habilidades Técnicas</p>
+                       <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-1">Habilidade</h3>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Dons e talentos individuais</p>
                    </div>
                 </div>
                 
@@ -539,79 +508,88 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
       </div>
 
       {/* PASSWORD CHANGE MODAL */}
-      <AnimatePresence>
-      {isPasswordModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-6">
-                <motion.div 
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                    className="absolute inset-0 bg-slate-950/60 backdrop-blur-md" 
-                    onClick={() => setIsPasswordModalOpen(false)}
-                />
-                <motion.div 
-                    initial={{ opacity: 0, scale: 0.9, y: 40 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, y: 40 }}
-                    className="bg-white rounded-[3rem] shadow-2xl p-12 max-w-md w-full relative z-10 ring-1 ring-black/5"
-                >
-                  <div className="flex justify-between items-center mb-10">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-brand-blue text-white rounded-2xl flex items-center justify-center shadow-lg shadow-brand-blue/20">
-                            <Lock size={20} />
-                        </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight leading-none">Segurança</h3>
-                    </div>
-                    <button 
-                        onClick={() => setIsPasswordModalOpen(false)} 
-                        className="p-3 bg-slate-50 text-slate-300 hover:text-slate-900 rounded-xl transition-all active:scale-90"
+      {createPortal(
+        <AnimatePresence>
+          {isPasswordModalOpen && (
+              <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-slate-950/60 backdrop-blur-xl" 
+                        onClick={() => setIsPasswordModalOpen(false)}
+                    />
+                    <motion.div 
+                        initial={{ opacity: 0, scale: 0.9, y: 40 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 40 }}
+                        className="bg-white rounded-[3rem] shadow-[0_64px_128px_-24px_rgba(0,0,0,0.2)] w-full max-w-md relative z-[1010] overflow-hidden"
                     >
-                        <X size={20} strokeWidth={3} />
-                    </button>
-                  </div>
-                  
-                  <div className="space-y-8">
-                      <div className="space-y-3">
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Nova Credencial</label>
-                          <input 
-                              type="password" 
-                              value={passwordForm.new}
-                              onChange={(e) => setPasswordForm({...passwordForm, new: e.target.value})}
-                              className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 outline-none font-bold text-slate-800 transition-all"
-                              placeholder="Mínimo 6 caracteres..."
-                          />
+                      <div className="px-10 py-10 border-b border-slate-50 flex justify-between items-center bg-slate-900 relative">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 pointer-events-none" />
+                        <div className="relative z-10">
+                            <div className="flex items-center gap-4 mb-2">
+                                <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 shadow-lg">
+                                    <Lock size={24} />
+                                </div>
+                                <h3 className="text-2xl font-black text-white tracking-tight leading-none">Segurança</h3>
+                            </div>
+                            <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.2em] ml-[3.75rem]">Controle de Acesso</p>
+                        </div>
+                        <button 
+                            onClick={() => setIsPasswordModalOpen(false)} 
+                            className="p-4 bg-white/10 text-white/50 hover:text-white rounded-[1.5rem] border border-white/5 backdrop-blur-md transition-all active:scale-90 relative z-10"
+                        >
+                            <X size={24} strokeWidth={3} />
+                        </button>
                       </div>
-                      <div className="space-y-3">
-                          <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Confirmar Credencial</label>
-                          <input 
-                              type="password" 
-                              value={passwordForm.confirm}
-                              onChange={(e) => setPasswordForm({...passwordForm, confirm: e.target.value})}
-                              className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 outline-none font-bold text-slate-800 transition-all"
-                              placeholder="Repita a nova senha..."
-                          />
+                      
+                      <div className="p-8 md:p-10 space-y-8">
+                          <div className="space-y-3">
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Nova Credencial</label>
+                              <input 
+                                  type="password" 
+                                  value={passwordForm.new}
+                                  onChange={(e) => setPasswordForm({...passwordForm, new: e.target.value})}
+                                  className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 outline-none font-bold text-slate-800 transition-all"
+                                  placeholder="Mínimo 6 caracteres..."
+                              />
+                          </div>
+                          <div className="space-y-3">
+                              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Confirmar Credencial</label>
+                              <input 
+                                  type="password" 
+                                  value={passwordForm.confirm}
+                                  onChange={(e) => setPasswordForm({...passwordForm, confirm: e.target.value})}
+                                  className="w-full px-8 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 outline-none font-bold text-slate-800 transition-all"
+                                  placeholder="Repita a nova senha..."
+                              />
+                          </div>
                       </div>
-                  </div>
-                  
-                  <div className="flex flex-col sm:flex-row gap-4 mt-12">
-                      <button 
-                        onClick={() => setIsPasswordModalOpen(false)} 
-                        className="flex-1 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 rounded-[1.5rem] transition-all"
-                        disabled={passLoading}
-                      >
-                          Cancelar
-                      </button>
-                      <button 
-                        onClick={handlePasswordUpdate}
-                        disabled={passLoading || !passwordForm.new || !passwordForm.confirm}
-                        className="flex-[2] py-5 bg-brand-blue text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-brand-blue/20 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
-                      >
-                          {passLoading ? <Loader2 size={16} className="animate-spin text-white/50" /> : <Save size={16} strokeWidth={3} />}
-                          Sincronizar Senha
-                      </button>
-                  </div>
-              </motion.div>
-          </div>
+                      
+                      <div className="px-10 py-10 bg-slate-50/50 border-t border-slate-100 flex flex-col sm:flex-row gap-4">
+                          <button 
+                            onClick={() => setIsPasswordModalOpen(false)} 
+                            className="flex-1 py-5 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-slate-600 hover:bg-slate-100 rounded-[1.5rem] transition-all"
+                            disabled={passLoading}
+                          >
+                              Cancelar
+                          </button>
+                          <button 
+                            onClick={handlePasswordUpdate}
+                            disabled={passLoading || !passwordForm.new || !passwordForm.confirm}
+                            className="flex-[2] py-5 bg-slate-900 text-white rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest shadow-xl shadow-slate-200 hover:bg-brand-blue hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:scale-100"
+                          >
+                              {passLoading ? <Loader2 size={16} className="animate-spin text-white/50" /> : <Save size={16} strokeWidth={3} />}
+                              Sincronizar Senha
+                          </button>
+                      </div>
+                  </motion.div>
+              </div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
-      </AnimatePresence>
     </div>
   );
 };

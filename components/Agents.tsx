@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { User, UserRole, isCoordinator } from '../types';
 import { supabase } from '../supabaseClient';
 import { 
-  Mail, Phone, Award, ShieldCheck, Loader2, Search, Users, 
+  Mail, Phone, Award, Loader2, Search, Users, 
   Send, MessageSquare, X, CheckCircle2, Calendar, ChevronRight, 
   Filter, MoreVertical, Star, Info, Settings
 } from 'lucide-react';
@@ -146,7 +146,7 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
   );
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-10 space-y-10 animate-in fade-in duration-1000 pb-32">
+    <div className="max-w-7xl mx-auto px-4 pt-1 md:p-10 space-y-10 animate-in fade-in duration-1000 pb-32">
       {/* modern Header */}
       <header className="flex flex-col lg:flex-row lg:items-end justify-between gap-8 py-6">
         <div className="animate-in slide-in-from-left-8 duration-700">
