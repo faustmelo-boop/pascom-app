@@ -463,8 +463,8 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
             </div>
             <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Produção Ativa</p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Tarefas</h1>
-          <p className="text-slate-400 font-medium text-lg italic mt-2">Sincronize o ritmo das atividades pastorais.</p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Nossa Missão</h1>
+          <p className="text-slate-400 font-medium text-lg italic mt-2">Sincronize o ritmo das atividades pastorais com amor.</p>
         </div>
 
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 animate-in slide-in-from-right-8 duration-700">
@@ -531,10 +531,10 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
       <div className="min-h-[700px] pb-20">
           {viewMode === 'kanban' ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 items-start">
-                <Column title="A Fazer" status={TaskStatus.TODO} />
-                <Column title="Evoluindo" status={TaskStatus.IN_PROGRESS} />
-                <Column title="Revisão" status={TaskStatus.REVIEW} />
-                <Column title="Finalizado" status={TaskStatus.DONE} />
+                <Column title="Planejadas" status={TaskStatus.TODO} />
+                <Column title="Em Andamento" status={TaskStatus.IN_PROGRESS} />
+                <Column title="Aguardando" status={TaskStatus.REVIEW} />
+                <Column title="Concluídas" status={TaskStatus.DONE} />
             </div>
           ) : (
             <div className="h-full">
@@ -609,7 +609,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
                                     {editingId ? <Edit2 size={20} /> : <Plus size={20} strokeWidth={3} />}
                                 </div>
                                 <h3 className="text-3xl font-black text-slate-900 tracking-tight leading-none">
-                                    {editingId ? 'Editar Detalhes' : 'Nova Atividade'}
+                                    {editingId ? 'Ajustar Atividade' : 'Nova Missão'}
                                 </h3>
                             </div>
                             <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-[3.25rem]">Workflow Operacional Pascom</p>
@@ -624,17 +624,17 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
                         {/* Title & Status Row */}
                         <div className="grid grid-cols-1 md:grid-cols-12 gap-8">
                             <div className="md:col-span-8">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Título da Atividade</label>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">O que faremos?</label>
                                 <input 
                                     type="text" 
                                     value={formData.title}
                                     onChange={(e) => setFormData({...formData, title: e.target.value})}
                                     className="w-full px-6 py-5 bg-slate-50 border border-slate-100 rounded-[1.8rem] focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue outline-none placeholder-slate-300 font-extrabold text-slate-800 text-lg transition-all"
-                                    placeholder="Ex: Arte Documentário Pascom 2024"
+                                    placeholder="Ex: Cobertura da Santa Missa"
                                 />
                             </div>
                             <div className="md:col-span-4">
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Status do Fluxo</label>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 ml-2">Etapa</label>
                                 <div className="relative group">
                                     <select 
                                         value={formData.status}
@@ -683,7 +683,7 @@ export const Tasks: React.FC<TasksProps> = ({ tasks, users, currentUser, onRefre
 
                             <div className="bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
                                 <div className="flex justify-between items-center mb-4">
-                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prioridade</label>
+                                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Urgência</label>
                                     <div className="p-2 bg-white rounded-lg text-rose-500 shadow-sm"><AlertCircle size={14} /></div>
                                 </div>
                                 <select 

@@ -294,8 +294,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <Award size={20} className="md:w-6 md:h-6" />
                     </div>
                     <div>
-                        <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Impacto Pastoral</h3>
-                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Contribuição Técnica</p>
+                        <h3 className="text-lg md:text-xl font-black text-slate-800 tracking-tight leading-none mb-1">Meus Frutos no Serviço</h3>
+                        <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Caminhada Técnica e Pastoral</p>
                     </div>
                 </div>
 
@@ -304,8 +304,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="p-2.5 md:p-3 bg-white rounded-xl md:rounded-2xl text-brand-green shadow-sm shadow-brand-green/10 group-hover:bg-brand-green group-hover:text-white transition-all"><CheckCircle2 size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /></div>
                             <div>
-                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-green/70 transition-colors">Entregas</p>
-                                <span className="text-base md:text-lg font-black text-slate-800">Finalizadas</span>
+                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-green/70 transition-colors">Atividades</p>
+                                <span className="text-base md:text-lg font-black text-slate-800">Missões Concluídas</span>
                             </div>
                         </div>
                         <span className="text-2xl md:text-3xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.tasksCompleted}</span>
@@ -315,8 +315,8 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <div className="flex items-center gap-3 md:gap-4">
                             <div className="p-2.5 md:p-3 bg-white rounded-xl md:rounded-2xl text-brand-yellow shadow-sm shadow-brand-yellow/10 group-hover:bg-brand-yellow group-hover:text-white transition-all"><Calendar size={18} className="md:w-5 md:h-5" strokeWidth={2.5} /></div>
                             <div>
-                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-yellow/70 transition-colors">Plantões</p>
-                                <span className="text-base md:text-lg font-black text-slate-800">Participações</span>
+                                <p className="text-[8px] md:text-[10px] font-black text-slate-400 uppercase tracking-[0.1em] group-hover:text-brand-yellow/70 transition-colors">Escalas</p>
+                                <span className="text-base md:text-lg font-black text-slate-800">Compromissos</span>
                             </div>
                         </div>
                         <span className="text-2xl md:text-3xl font-black text-slate-900 group-hover:scale-110 transition-transform">{stats.schedulesCount}</span>
@@ -351,7 +351,7 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                         <Share2 size={20} className="md:w-6 md:h-6 text-white/60" />
                     </div>
                     <div className="text-right">
-                        <p className="text-[8px] md:text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Membership</p>
+                        <p className="text-[8px] md:text-[9px] font-black text-white/40 uppercase tracking-[0.3em] mb-1">Membro Oficial</p>
                         <p className="text-[10px] md:text-xs font-bold text-white leading-none italic">ID-{user.id.slice(0, 8)}</p>
                     </div>
                  </div>
@@ -433,9 +433,9 @@ export const Profile: React.FC<ProfileProps> = ({ user, email, tasks, schedules,
                             </div>
                         </div>
                         <div className="md:col-span-2 space-y-4">
-                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">Endereço de Login (Imutável)</label>
+                            <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4">E-mail de Acesso (Fixo)</label>
                             <div className="w-full px-8 py-5 bg-slate-100 text-slate-400 border border-slate-200 rounded-[2rem] font-bold">
-                                {email || 'Sincronizando...'}
+                                {email || 'Buscando...'}
                             </div>
                         </div>
                     </motion.div>

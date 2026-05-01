@@ -167,7 +167,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center mb-4 group-hover:bg-white group-hover:text-brand-blue transition-all shadow-lg group-hover:rotate-12">
                 <Sparkles size={28} className="text-white transition-colors" />
               </div>
-              <span className="text-white font-black text-[11px] uppercase tracking-[0.25em]">AI Copy</span>
+              <span className="text-white font-black text-[11px] uppercase tracking-[0.25em]">Auxílio Texto</span>
             </motion.a>
 
             <motion.a 
@@ -184,7 +184,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
               <div className="w-14 h-14 bg-white/20 backdrop-blur-md rounded-[1.5rem] flex items-center justify-center mb-4 group-hover:bg-white group-hover:text-brand-green transition-all shadow-sm group-hover:-rotate-12">
                 <LayoutTemplate size={28} className="text-white transition-colors" />
               </div>
-              <span className="text-white font-black text-[11px] uppercase tracking-[0.25em]">Designer</span>
+              <span className="text-white font-black text-[11px] uppercase tracking-[0.25em]">Canva</span>
             </motion.a>
           </div>
 
@@ -207,7 +207,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div>
                   <h3 className="font-black text-white text-xl tracking-tight leading-none mb-1">Acessos</h3>
-                  <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Painel Blindado</p>
+                  <p className="text-[10px] font-black text-white/60 uppercase tracking-widest">Senhas da Equipe</p>
                 </div>
               </div>
               <ArrowUpRight size={20} className="text-white/40 group-hover:text-white group-hover:translate-x-1 group-hover:-translate-y-1 transition-all" />
@@ -285,7 +285,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                    <ArrowUpRight size={20} />
                 </button>
               </div>
-              <h3 className="text-2xl font-black tracking-tight mb-6">Minhas Tarefas</h3>
+              <h3 className="text-2xl font-black tracking-tight mb-6">Nossa Missão</h3>
               <div className="space-y-3">
                 <AnimatePresence mode="popLayout">
                   {tasks.filter(t => t.status !== TaskStatus.DONE).slice(0, 4).map((task, idx) => (
@@ -337,7 +337,7 @@ export const Dashboard: React.FC<DashboardProps> = ({
                     className="text-center py-8 bg-white/5 rounded-[2rem] border border-dashed border-white/20 flex flex-col items-center animate-pulse"
                   >
                     <CheckCircle2 size={32} className="text-white/20 mb-2" />
-                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Missão Cumprida!</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Tudo pronto!</p>
                   </motion.div>
                 )}
               </div>

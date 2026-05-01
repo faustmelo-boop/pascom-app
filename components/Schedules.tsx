@@ -504,8 +504,8 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
             </div>
           </div>
           <div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Escalas Pascom</h1>
-            <p className="text-slate-400 font-medium text-lg italic mt-2">Visão unificada de compromissos e presenças confirmadas.</p>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Escalas da Equipe</h1>
+            <p className="text-slate-400 font-medium text-lg italic mt-2">Nossa organização a serviço do Evangelho.</p>
           </div>
         </motion.div>
 
@@ -684,7 +684,7 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                                           <div>
                                               <p className="text-sm font-black text-slate-900 tracking-tight">{role.roleName}</p>
                                               <p className={`text-xs font-bold mt-0.5 ${agent ? 'text-slate-400' : 'text-amber-600 italic uppercase tracking-tighter'}`}>
-                                                  {agent ? agent.name : 'Posto Vacante'}
+                                                  {agent ? agent.name : 'Vaga Aberta'}
                                               </p>
                                           </div>
                                       </div>
@@ -875,7 +875,7 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                       <CalendarIcon size={32} />
                     </div>
                     <div>
-                      <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{editingId ? 'Configurar Escala' : 'Criar Nova Escala'}</h3>
+                      <h3 className="text-3xl font-black text-slate-900 tracking-tighter">{editingId ? 'Ajustar Atividade' : 'Planejar Momento'}</h3>
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] mt-1">Gerenciamento de Recurso Humano</p>
                     </div>
                   </div>
@@ -889,7 +889,7 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                   <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                        <div className="space-y-4">
-                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Título do Evento</label>
+                         <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">O que teremos?</label>
                          <input 
                            type="text"
                            value={formData.title}
@@ -965,7 +965,7 @@ export const Schedules: React.FC<SchedulesProps> = ({ schedules, users, currentU
                                />
                              </div>
                              <div className="flex-1 space-y-3">
-                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Agente Escalado</label>
+                               <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Servidor Designado</label>
                                <select 
                                  value={row.userId}
                                  onChange={(e) => updateAssignment(index, 'userId', e.target.value)}

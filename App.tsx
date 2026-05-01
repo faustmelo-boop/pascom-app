@@ -382,8 +382,8 @@ function App() {
               <DesktopNavItem tab="dashboard" icon={Home} label="Início" />
               <DesktopNavItem tab="escalas" icon={Calendar} label="Escalas" />
               <DesktopNavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
-              <DesktopNavItem tab="ava" icon={GraduationCap} label="AVA" />
-              <DesktopNavItem tab="agentes" icon={Users} label="Agentes" />
+              <DesktopNavItem tab="ava" icon={GraduationCap} label="Formação" />
+              <DesktopNavItem tab="agentes" icon={Users} label="Membros" />
            </nav>
 
            {/* Right: Notifications + Identity */}
@@ -429,8 +429,8 @@ function App() {
           <MobileNavItem tab="dashboard" icon={Home} label="Início" />
           <MobileNavItem tab="escalas" icon={Calendar} label="Escalas" />
           <MobileNavItem tab="tarefas" icon={CheckSquare} label="Tarefas" />
-          <MobileNavItem tab="ava" icon={GraduationCap} label="AVA" />
-          <MobileNavItem tab="agentes" icon={Users} label="Agentes" />
+          <MobileNavItem tab="ava" icon={GraduationCap} label="Formação" />
+          <MobileNavItem tab="agentes" icon={Users} label="Membros" />
         </nav>
       </main>
     </div>

@@ -154,10 +154,10 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
             <div className="w-14 h-14 bg-brand-blue rounded-[1.5rem] flex items-center justify-center text-white shadow-2xl shadow-brand-blue/30 rotate-3">
                 <Users size={28} />
             </div>
-            <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Equipe Pascom</p>
+            <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Corpo da Pascom</p>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Agentes</h1>
-          <p className="text-slate-400 font-medium text-lg italic mt-2">Nossa força reside na diversidade de talentos e na unidade de nossa missão.</p>
+          <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Nossa Equipe</h1>
+          <p className="text-slate-400 font-medium text-lg italic mt-2">Nossa força reside na diversidade de dons e na unidade de nossa missão paroquial.</p>
         </div>
         
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 animate-in slide-in-from-right-8 duration-700">
@@ -173,7 +173,7 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-brand-blue transition-all" size={20} />
                 <input 
                     type="text" 
-                    placeholder="Buscar agente..." 
+                    placeholder="Buscar membro..." 
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full pl-14 pr-8 py-4 bg-white rounded-[1.8rem] border border-slate-100 shadow-sm outline-none focus:ring-4 focus:ring-brand-blue/10 focus:border-brand-blue font-bold text-sm transition-all"
@@ -334,8 +334,8 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
                                         <Award size={18} />
                                     </div>
                                     <div>
-                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Especialidades</h4>
-                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-0.5">Skill Mapping</p>
+                                        <h4 className="text-sm font-black text-slate-800 uppercase tracking-widest">Dons e Talentos</h4>
+                                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic leading-none mt-0.5">Dons a Serviço</p>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-2">
@@ -355,7 +355,7 @@ export const Agents: React.FC<AgentsProps> = ({ users, currentUser, onRefresh })
                             {isCurrentUserCoordinator && selectedAgent.id !== currentUser.id && (
                               <section className="bg-slate-50 p-6 md:p-8 rounded-[2.5rem] border border-slate-100 shadow-inner">
                                   <h4 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                                     <Settings size={14} className="text-brand-blue" /> Painel de Comando
+                                     <Settings size={14} className="text-brand-blue" /> Apoio ao Membro
                                   </h4>
                                   <div className="space-y-4">
                                       <button 

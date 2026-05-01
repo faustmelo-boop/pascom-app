@@ -591,8 +591,8 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
       <div className="px-8 py-6 bg-white border-b border-slate-200">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Tesouro</h1>
-            <p className="text-slate-500 text-sm">Gestão financeira e prestação de contas da pastoral</p>
+            <h1 className="text-2xl font-bold text-slate-900">Nossos Recursos</h1>
+            <p className="text-slate-500 text-sm">Transparência e cuidado com as doações e recursos da nossa comunidade</p>
           </div>
           <div className="flex items-center gap-3">
             {canAdd && (
@@ -617,10 +617,10 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
         {/* Sub-tabs */}
         <div className="flex items-center gap-1 mt-8 overflow-x-auto hide-scroll">
           {[
-            { id: 'dashboard', label: 'Dashboard', icon: PieChart },
-            { id: 'transacoes', label: 'Lançamentos', icon: ArrowLeftRight },
-            { id: 'contas', label: 'Contas', icon: Wallet },
-            { id: 'projetos', label: 'Projetos', icon: Briefcase },
+            { id: 'dashboard', label: 'Início', icon: PieChart },
+            { id: 'transacoes', label: 'Movimentações', icon: ArrowLeftRight },
+            { id: 'contas', label: 'Cofres / Contas', icon: Wallet },
+            { id: 'projetos', label: 'Nossas Missões', icon: Briefcase },
             { id: 'categorias', label: 'Categorias', icon: Tag },
           ].map((tab) => (
             <button
@@ -649,10 +649,10 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <div className="p-2 bg-brand-blue/10 text-brand-blue rounded-lg">
                     <Wallet size={20} />
                   </div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Total</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Disponibilidade</span>
                 </div>
                 <h3 className="text-2xl font-bold text-slate-900">{formatCurrency(totalBalance)}</h3>
-                <p className="text-slate-500 text-xs mt-1">Soma de todas as contas ativas</p>
+                <p className="text-slate-500 text-xs mt-1">Saldo total para o serviço</p>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -660,10 +660,10 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <div className="p-2 bg-brand-green/10 text-brand-green rounded-lg">
                     <TrendingUp size={20} />
                   </div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Entradas (Mês)</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ofertas (Mês)</span>
                 </div>
                 <h3 className="text-2xl font-bold text-brand-green">{formatCurrency(monthlyIncome)}</h3>
-                <p className="text-slate-500 text-xs mt-1">Receitas confirmadas no mês</p>
+                <p className="text-slate-500 text-xs mt-1">Recursos recebidos no mês</p>
               </div>
 
               <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
@@ -682,12 +682,12 @@ export const FinancialPatrimony: React.FC<FinancialPatrimonyProps> = ({
                   <div className="p-2 bg-slate-50 text-slate-600 rounded-lg">
                     <ArrowLeftRight size={20} />
                   </div>
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Resultado</span>
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Fruto Social</span>
                 </div>
                 <h3 className={`text-2xl font-bold ${monthlyResult >= 0 ? 'text-brand-green' : 'text-red-600'}`}>
                   {formatCurrency(monthlyResult)}
                 </h3>
-                <p className="text-slate-500 text-xs mt-1">{monthlyResult >= 0 ? 'Superávit mensal' : 'Déficit mensal'}</p>
+                <p className="text-slate-500 text-xs mt-1">{monthlyResult >= 0 ? 'Saldo positivo no mês' : 'Saldo negativo no mês'}</p>
               </div>
             </div>
 

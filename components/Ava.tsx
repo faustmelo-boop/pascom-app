@@ -471,8 +471,8 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
                                     </div>
                                     <p className="text-[10px] font-black text-brand-blue uppercase tracking-[0.3em] bg-brand-blue/10 px-4 py-2 rounded-full border border-brand-blue/10">Ambiente de Aprendizagem</p>
                                 </div>
-                                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Formação</h1>
-                                <p className="text-slate-400 font-medium text-lg italic mt-2">Boralá aprender, {currentUser.name.split(' ')[0]}!</p>
+                                <h1 className="text-4xl md:text-5xl font-black tracking-tight text-slate-900 leading-tight">Caminhos de Formação</h1>
+                                <p className="text-slate-400 font-medium text-lg italic mt-2">Crescendo juntos no serviço e na fé, {currentUser.name.split(' ')[0]}!</p>
                             </div>
 
                             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 animate-in slide-in-from-right-8 duration-700">
@@ -567,8 +567,8 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
                                             <MessageSquare size={24} />
                                         </div>
                                         <div className="flex-1">
-                                            <div className="text-xl font-black text-slate-800 tracking-tight group-hover:text-brand-blue transition-colors">Mural de Avisos</div>
-                                            <p className="text-slate-400 text-sm font-medium mt-1">Comunicados importantes e discussões do curso.</p>
+                                            <div className="text-xl font-black text-slate-800 tracking-tight group-hover:text-brand-blue transition-colors">Partilha e Diálogo</div>
+                                            <p className="text-slate-400 text-sm font-medium mt-1">Espaço para conversar, tirar dúvidas e crescer em equipe.</p>
                                         </div>
                                         <div className="p-3 bg-slate-50 rounded-xl text-slate-300 group-hover:text-brand-blue group-hover:bg-brand-blue/10 transition-all">
                                           <ChevronRight size={20} />
@@ -596,7 +596,7 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
                                         {lessonsLoading ? (
                                             <div className="flex flex-col items-center justify-center py-20 gap-4">
                                                 <Loader2 size={40} className="animate-spin text-brand-blue/20" />
-                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Carregando currículo...</span>
+                                                <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Organizando os encontros...</span>
                                             </div>
                                         ) : lessons.length === 0 ? (
                                             <div className="p-20 text-center text-slate-300 animate-in zoom-in-95">
@@ -663,7 +663,7 @@ export const Ava: React.FC<AvaProps> = ({ courses, documents, currentUser, users
                         {/* Right Blocks */}
                         <div className="w-full lg:w-96 space-y-8 shrink-0">
                             <div className="bg-white rounded-[3rem] border border-slate-50 shadow-sm overflow-hidden p-8">
-                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-8 text-center">Progresso Geral</h3>
+                                <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.25em] mb-8 text-center">Meu Caminho</h3>
                                 <div className="flex flex-col items-center">
                                     <div className="relative w-48 h-48 flex items-center justify-center mb-8">
                                         <svg className="w-full h-full transform -rotate-90">

@@ -199,8 +199,8 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4 py-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Patrimônio</h1>
-          <p className="text-slate-500 font-medium text-lg italic">Gestão de equipamentos e infraestrutura da pastoral</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Zelo pelo Patrimônio</h1>
+          <p className="text-slate-500 font-medium text-lg italic">Cuidando dos bens que servem à nossa missão evangelizadora.</p>
         </div>
         
         {isAdmin && (
@@ -296,7 +296,7 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                         </p>
 
                         <div className="mt-auto pt-6 border-t border-slate-50">
-                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Custódia Atual</p>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Aos Cuidados de</p>
                             <div className="flex items-center gap-3 bg-slate-50/50 p-2 rounded-2xl border border-slate-100/50 ring-4 ring-transparent group-hover:ring-slate-50 transition-all">
                                 {holder ? (
                                     <>
@@ -426,13 +426,13 @@ export const Inventory: React.FC<InventoryProps> = ({ items, users, currentUser,
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Quem está com o item?</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Quem está cuidando deste bem?</label>
                     <select 
                         value={formData.holderId}
                         onChange={(e) => setFormData({...formData, holderId: e.target.value})}
                         className="w-full px-3 py-2 bg-white text-gray-900 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue/10 focus:border-brand-blue outline-none"
                     >
-                        <option value="">-- Ninguém (No armário) --</option>
+                        <option value="">-- Guardado (Na Sede) --</option>
                         {users.map(u => (
                             <option key={u.id} value={u.id}>{u.name}</option>
                         ))}

@@ -90,8 +90,8 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
       {/* Header */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-6 py-4">
         <div>
-          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Cadastros Externos</h1>
-          <p className="text-slate-500 font-medium text-lg italic">Repositório de informações da base de dados kv_store</p>
+          <h1 className="text-4xl font-extrabold tracking-tight text-slate-900 mb-2">Inscrições e Participantes</h1>
+          <p className="text-slate-500 font-medium text-lg italic">Acompanhamento de novos membros e participantes de eventos.</p>
         </div>
         
         <div className="flex items-center gap-4">
@@ -212,7 +212,7 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
                   <Database size={24} />
                 </div>
                 <div>
-                  <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none mb-1">Ficha de Registro</h3>
+                  <h3 className="text-2xl font-extrabold text-slate-900 tracking-tight leading-none mb-1">Ficha do Participante</h3>
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID: {selectedItem.id}</p>
                 </div>
               </div>
@@ -254,7 +254,7 @@ export const Registrations: React.FC<RegistrationsProps> = ({ currentUser }) => 
                 onClick={() => handleDelete(selectedItem.id)}
                 className="flex-1 py-4 px-6 text-rose-500 font-black uppercase tracking-widest hover:bg-rose-50 rounded-[1.5rem] text-xs transition-all flex items-center justify-center gap-2"
               >
-                <Trash2 size={18} /> Apagar Registro
+                <Trash2 size={18} /> Remover Inscrição
               </button>
               <button 
                 onClick={() => setSelectedItem(null)}

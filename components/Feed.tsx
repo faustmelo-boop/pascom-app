@@ -488,7 +488,7 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
                 className="flex-1 bg-slate-50 hover:bg-slate-100 rounded-[1.8rem] px-6 py-4 text-left transition-all group/btn border border-slate-100"
               >
                 <span className="text-slate-400 text-sm sm:text-base font-medium group-hover/btn:text-slate-600">
-                  O que você está pensando, {currentUser.name.split(' ')[0]}?
+                  Olá {currentUser.name.split(' ')[0]}, o que deseja partilhar hoje?
                 </span>
               </button>
               <div className="hidden sm:flex items-center gap-2">
@@ -516,8 +516,8 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
                 <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-inner ring-4 ring-white">
                     <MessageSquare size={40} className="text-slate-200" />
                 </div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight">Silêncio no Mural</h3>
-                <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Nenhuma publicação por aqui. Seja o primeiro a anunciar algo!</p>
+                <h3 className="text-xl font-black text-slate-800 tracking-tight">O Mural está tranquilo</h3>
+                <p className="text-slate-400 text-sm mt-2 max-w-xs mx-auto">Ainda não há mensagens por aqui. Que tal ser o primeiro a partilhar algo?</p>
             </div>
         ) : (
             <div className="space-y-8 pb-12">
@@ -554,8 +554,8 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
             >
               <div className="p-8 border-b border-slate-50 flex items-center justify-between">
                 <div>
-                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">Criar Publicação</h3>
-                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Mural da Comunidade</p>
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight">Nova Mensagem</h3>
+                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-1">Comunicando com amor</p>
                 </div>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
@@ -664,7 +664,7 @@ export const Feed: React.FC<FeedProps> = ({ posts, users, currentUser, onRefresh
                     className="w-full sm:w-auto bg-slate-900 text-white py-4 px-10 rounded-2xl hover:bg-brand-blue active:scale-95 transition-all font-black uppercase tracking-[0.2em] text-[10px] flex items-center justify-center gap-3 disabled:opacity-30 shadow-xl shadow-slate-200"
                 >
                     {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />} 
-                    <span>Publicar AGORA</span>
+                    <span>Partilhar agora</span>
                  </button>
               </div>
             </motion.div>
