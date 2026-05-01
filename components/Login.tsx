@@ -118,9 +118,9 @@ export const Login: React.FC = () => {
                 }
             }
 
-            setSuccessMsg("Conta criada com sucesso! Verifique seu e-mail para confirmar o cadastro antes de entrar.");
+            setSuccessMsg("Que alegria ter você conosco! Sua conta foi criada. Por favor, verifique sua caixa de entrada e confirme seu e-mail para que possamos caminhar juntos no serviço.");
             // Optional: switch back to login after delay
-            setTimeout(() => setView('login'), 5000);
+            // setTimeout(() => setView('login'), 10000); // Increased delay to allow reading
         }
 
     } catch (err: any) {
@@ -343,68 +343,90 @@ export const Login: React.FC = () => {
                 </div>
 
                 <form onSubmit={handleSignUp} className="space-y-4">
-                  {error && (
-                    <div className="text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100 flex items-center gap-2">
-                      <AlertTriangle size={14} /> {error}
-                    </div>
+                  {successMsg ? (
+                    <motion.div 
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-emerald-50 text-emerald-700 p-6 rounded-[2rem] border border-emerald-100 text-xs font-bold leading-relaxed flex flex-col items-center text-center gap-4"
+                    >
+                      <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600">
+                        <Mail size={32} />
+                      </div>
+                      <p className="px-2">{successMsg}</p>
+                      <button 
+                        type="button" 
+                        onClick={() => switchView('login')} 
+                        className="bg-emerald-600 text-white px-8 py-3 rounded-xl uppercase tracking-widest text-[10px] font-black shadow-lg shadow-emerald-200"
+                      >
+                        Ir para o Login
+                      </button>
+                    </motion.div>
+                  ) : (
+                    <>
+                      {error && (
+                        <div className="text-rose-500 text-xs font-bold bg-rose-50 p-3 rounded-xl border border-rose-100 flex items-center gap-2">
+                          <AlertTriangle size={14} /> {error}
+                        </div>
+                      )}
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
+                        <input 
+                          type="text"
+                          required
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Como devemos te chamar?"
+                          className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
+                        />
+                      </div>
+
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
+                        <input 
+                          type="email"
+                          required
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Seu email"
+                          className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha</label>
+                          <input 
+                            type="password"
+                            required
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Mín 6 letras"
+                            className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar</label>
+                          <input 
+                            type="password"
+                            required
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
+                            placeholder="Repetir"
+                            className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
+                          />
+                        </div>
+                      </div>
+
+                      <button 
+                        type="submit"
+                        disabled={loading}
+                        className="w-full bg-brand-green text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
+                      >
+                        {loading ? <Loader2 className="animate-spin" size={18} /> : 'Criar Perfil'}
+                      </button>
+                    </>
                   )}
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Nome Completo</label>
-                    <input 
-                      type="text"
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Como devemos te chamar?"
-                      className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Email</label>
-                    <input 
-                      type="email"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="Seu email"
-                      className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Senha</label>
-                      <input 
-                        type="password"
-                        required
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Mín 6 letras"
-                        className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Confirmar</label>
-                      <input 
-                        type="password"
-                        required
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Repetir"
-                        className="w-full bg-slate-50 border border-slate-100 px-6 py-3.5 rounded-2xl outline-none focus:ring-4 focus:ring-brand-blue/5 focus:border-brand-blue transition-all text-sm font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  <button 
-                    type="submit"
-                    disabled={loading}
-                    className="w-full bg-brand-green text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-brand-green/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center justify-center gap-2"
-                  >
-                    {loading ? <Loader2 className="animate-spin" size={18} /> : 'Criar Perfil'}
-                  </button>
                 </form>
 
                 <div className="mt-auto pt-8 text-center text-[11px] font-bold text-slate-400">
